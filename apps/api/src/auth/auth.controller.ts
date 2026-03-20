@@ -20,7 +20,10 @@ export class AuthController {
       sub: user._id.toString(),
       email: user.email,
     });
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    let frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    if (!frontendUrl.startsWith('http')) {
+      frontendUrl = `https://${frontendUrl}`;
+    }
     res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
   }
 
