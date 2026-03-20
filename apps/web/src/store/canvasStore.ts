@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { IStroke, IPoint } from '@note-app/shared';
+import type { IStroke } from '@note-app/shared';
 
 interface CanvasState {
   strokes: IStroke[];

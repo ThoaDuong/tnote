@@ -13,7 +13,7 @@ interface FolderState {
   deleteFolder: (id: string) => Promise<void>;
 }
 
-export const useFolderStore = create<FolderState>((set, get) => ({
+export const useFolderStore = create<FolderState>((set) => ({
   folders: [],
   activeFolderId: null,
   isLoading: false,
