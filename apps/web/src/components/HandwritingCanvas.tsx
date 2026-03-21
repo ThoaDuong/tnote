@@ -139,9 +139,8 @@ export default function HandwritingCanvas({ onStrokesChange }: HandwritingCanvas
     });
   }, [pageDimensions, strokes, pageCount]);
 
-  // Get point relative to canvas
-  const getCanvasPoint = (e: React.PointerEvent<HTMLCanvasElement>): IPoint => {
-    const canvas = e.currentTarget;
+  // Get point relative to canvas — accepts both React and native PointerEvent
+  const getCanvasPoint = (e: PointerEvent | React.PointerEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement): IPoint => {
     const rect = canvas.getBoundingClientRect();
     return {
       x: e.clientX - rect.left,
@@ -166,7 +165,7 @@ export default function HandwritingCanvas({ onStrokesChange }: HandwritingCanvas
     const pageIdx = getPageIndex(e.currentTarget);
     isDrawing.current = true;
     activePageIndex.current = pageIdx;
-    currentPoints.current = [getCanvasPoint(e)];
+    currentPoints.current = [getCanvasPoint(e.nativeEvent, e.currentTarget)];
     erasedIndices.current = new Set();
     e.currentTarget.setPointerCapture(e.pointerId);
 
@@ -186,28 +185,58 @@ export default function HandwritingCanvas({ onStrokesChange }: HandwritingCanvas
     const canvas = canvasRefs.current.get(pageIdx);
     if (!canvas) return;
 
-    const point = getCanvasPoint(e);
-    currentPoints.current.push(point);
-
+    // Use coalesced events to capture ALL intermediate stylus points
+    // Apple Pencil fires at 240Hz but browser batches into fewer pointermove events
+    const coalescedEvents = (e.nativeEvent as PointerEvent).getCoalescedEvents?.() || [e.nativeEvent];
+    const newPoints: IPoint[] = coalescedEvents.map((ce) => getCanvasPoint(ce, canvas));
+    
     const ctx = canvas.getContext('2d')!;
     const dpr = window.devicePixelRatio || 1;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     if (currentTool === 'pen') {
-      redrawPage(ctx, pageIdx);
-      const tempStroke: IStroke = {
-        points: currentPoints.current,
-        color: currentColor,
-        size: currentSize,
-        tool: 'pen',
-        pageIndex: pageIdx,
-      };
-      drawStroke(ctx, tempStroke);
+      // Incremental drawing: only draw new segments, don't redraw entire page
+      const prevPoints = currentPoints.current;
+      currentPoints.current.push(...newPoints);
+
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = currentColor;
+      ctx.lineWidth = currentSize;
+
+      // Draw smooth curve through the new points + last existing point
+      const startIdx = Math.max(0, prevPoints.length - 2);
+      const allPoints = currentPoints.current;
+
+      for (let i = startIdx; i < allPoints.length - 1; i++) {
+        const p0 = allPoints[i];
+        const p1 = allPoints[i + 1];
+        const midX = (p0.x + p1.x) / 2;
+        const midY = (p0.y + p1.y) / 2;
+
+        ctx.beginPath();
+        if (i === 0) {
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(midX, midY);
+        } else {
+          const prev = allPoints[i - 1];
+          const prevMidX = (prev.x + p0.x) / 2;
+          const prevMidY = (prev.y + p0.y) / 2;
+          ctx.moveTo(prevMidX, prevMidY);
+          ctx.quadraticCurveTo(p0.x, p0.y, midX, midY);
+        }
+        ctx.stroke();
+      }
     } else if (currentTool === 'eraser') {
-      const eraserRadius = currentSize * 4;
-      findAllStrokesAtPoint(point, eraserRadius, pageIdx, erasedIndices.current);
+      // For eraser, check all coalesced points
+      for (const point of newPoints) {
+        currentPoints.current.push(point);
+        const eraserRadius = currentSize * 4;
+        findAllStrokesAtPoint(point, eraserRadius, pageIdx, erasedIndices.current);
+      }
       redrawPage(ctx, pageIdx, erasedIndices.current);
-      drawEraserCursor(ctx, point, eraserRadius);
+      const lastPoint = newPoints[newPoints.length - 1];
+      drawEraserCursor(ctx, lastPoint, currentSize * 4);
     }
   };
 
@@ -226,6 +255,14 @@ export default function HandwritingCanvas({ onStrokesChange }: HandwritingCanvas
         tool: 'pen',
         pageIndex: pageIdx,
       });
+      // Full redraw to clean up incremental drawing artifacts
+      const canvas = canvasRefs.current.get(pageIdx);
+      if (canvas) {
+        const ctx = canvas.getContext('2d')!;
+        const dpr = window.devicePixelRatio || 1;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        // strokes updated via addStroke will trigger useEffect redraw
+      }
     } else if (currentTool === 'eraser' && erasedIndices.current.size > 0) {
       removeStrokes([...erasedIndices.current]);
     }

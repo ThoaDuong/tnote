@@ -1003,7 +1003,7 @@ a {
 .canvas-scroll-container {
   flex: 1;
   position: relative;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
   background: #E8E2DA;
   padding: 24px 0 100px;
