@@ -10,6 +10,27 @@ const PEN_COLORS = [
 // A4 ratio: width / height ≈ 1 / √2
 const PAGE_ASPECT_RATIO = Math.SQRT2;
 
+// Smooth a point using weighted moving average of nearby points
+const smoothPoint = (points: IPoint[], index: number, radius: number = 3): IPoint => {
+  const start = Math.max(0, index - radius);
+  const end = Math.min(points.length - 1, index + radius);
+  let totalX = 0, totalY = 0, totalWeight = 0;
+
+  for (let i = start; i <= end; i++) {
+    // Weight closer points more heavily
+    const weight = 1 / (1 + Math.abs(i - index));
+    totalX += points[i].x * weight;
+    totalY += points[i].y * weight;
+    totalWeight += weight;
+  }
+
+  return {
+    ...points[index],
+    x: totalX / totalWeight,
+    y: totalY / totalWeight,
+  };
+};
+
 interface HandwritingCanvasProps {
   onStrokesChange?: (strokes: IStroke[]) => void;
 }
@@ -21,6 +42,7 @@ export default function HandwritingCanvas({ onStrokesChange }: HandwritingCanvas
   const currentPoints = useRef<IPoint[]>([]);
   const activePageIndex = useRef<number>(-1);
   const erasedIndices = useRef<Set<number>>(new Set());
+  const lastDrawnIndex = useRef(0);
   const [showSize, setShowSize] = useState(false);
   const [pageDimensions, setPageDimensions] = useState({ width: 0, height: 0 });
 
@@ -87,7 +109,7 @@ export default function HandwritingCanvas({ onStrokesChange }: HandwritingCanvas
     });
   };
 
-  // Draw single stroke – uniform width, continuous path
+  // Draw single stroke – uniform width, smooth continuous path
   const drawStroke = (ctx: CanvasRenderingContext2D, stroke: IStroke) => {
     const { points, color, size } = stroke;
     if (points.length < 2) return;
@@ -98,18 +120,19 @@ export default function HandwritingCanvas({ onStrokesChange }: HandwritingCanvas
     ctx.lineWidth = size;
 
     ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
+    const s0 = smoothPoint(points, 0);
+    ctx.moveTo(s0.x, s0.y);
 
     for (let i = 1; i < points.length - 1; i++) {
-      const curr = points[i];
-      const next = points[i + 1];
-      const midX = (curr.x + next.x) / 2;
-      const midY = (curr.y + next.y) / 2;
-      ctx.quadraticCurveTo(curr.x, curr.y, midX, midY);
+      const sCurr = smoothPoint(points, i);
+      const sNext = smoothPoint(points, i + 1);
+      const midX = (sCurr.x + sNext.x) / 2;
+      const midY = (sCurr.y + sNext.y) / 2;
+      ctx.quadraticCurveTo(sCurr.x, sCurr.y, midX, midY);
     }
 
-    const last = points[points.length - 1];
-    ctx.lineTo(last.x, last.y);
+    const sLast = smoothPoint(points, points.length - 1);
+    ctx.lineTo(sLast.x, sLast.y);
     ctx.stroke();
   };
 
@@ -167,6 +190,7 @@ export default function HandwritingCanvas({ onStrokesChange }: HandwritingCanvas
     activePageIndex.current = pageIdx;
     currentPoints.current = [getCanvasPoint(e.nativeEvent, e.currentTarget)];
     erasedIndices.current = new Set();
+    lastDrawnIndex.current = 0;
     e.currentTarget.setPointerCapture(e.pointerId);
 
     // Auto-add page if drawing on the last page
@@ -185,52 +209,59 @@ export default function HandwritingCanvas({ onStrokesChange }: HandwritingCanvas
     const canvas = canvasRefs.current.get(pageIdx);
     if (!canvas) return;
 
-    // Use coalesced events to capture ALL intermediate stylus points
-    // Apple Pencil fires at 240Hz but browser batches into fewer pointermove events
+    // Capture ALL intermediate stylus points via coalesced events
     const coalescedEvents = (e.nativeEvent as PointerEvent).getCoalescedEvents?.() || [e.nativeEvent];
     const newPoints: IPoint[] = coalescedEvents.map((ce) => getCanvasPoint(ce, canvas));
-    
+    currentPoints.current.push(...newPoints);
+
     const ctx = canvas.getContext('2d')!;
     const dpr = window.devicePixelRatio || 1;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     if (currentTool === 'pen') {
-      // Incremental drawing: only draw new segments, don't redraw entire page
-      const prevPoints = currentPoints.current;
-      currentPoints.current.push(...newPoints);
+      const allPoints = currentPoints.current;
+      if (allPoints.length < 2) return;
 
+      // Set up drawing style
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.strokeStyle = currentColor;
       ctx.lineWidth = currentSize;
 
-      // Draw smooth curve through the new points + last existing point
-      const startIdx = Math.max(0, prevPoints.length - 2);
-      const allPoints = currentPoints.current;
+      // Draw new segments in a SINGLE continuous path
+      // Start from 2 points before lastDrawnIndex for smooth curve continuity
+      const drawStart = Math.max(1, lastDrawnIndex.current - 1);
 
-      for (let i = startIdx; i < allPoints.length - 1; i++) {
-        const p0 = allPoints[i];
-        const p1 = allPoints[i + 1];
-        const midX = (p0.x + p1.x) / 2;
-        const midY = (p0.y + p1.y) / 2;
+      ctx.beginPath();
 
-        ctx.beginPath();
-        if (i === 0) {
-          ctx.moveTo(p0.x, p0.y);
-          ctx.lineTo(midX, midY);
-        } else {
-          const prev = allPoints[i - 1];
-          const prevMidX = (prev.x + p0.x) / 2;
-          const prevMidY = (prev.y + p0.y) / 2;
-          ctx.moveTo(prevMidX, prevMidY);
-          ctx.quadraticCurveTo(p0.x, p0.y, midX, midY);
-        }
-        ctx.stroke();
+      // Move to the starting midpoint
+      if (drawStart === 1) {
+        const s0 = smoothPoint(allPoints, 0);
+        ctx.moveTo(s0.x, s0.y);
+      } else {
+        const sPrev = smoothPoint(allPoints, drawStart - 1);
+        const sCurr = smoothPoint(allPoints, drawStart);
+        ctx.moveTo((sPrev.x + sCurr.x) / 2, (sPrev.y + sCurr.y) / 2);
       }
+
+      // Draw quadratic curves through smoothed midpoints
+      for (let i = drawStart; i < allPoints.length - 1; i++) {
+        const sCurr = smoothPoint(allPoints, i);
+        const sNext = smoothPoint(allPoints, i + 1);
+        const midX = (sCurr.x + sNext.x) / 2;
+        const midY = (sCurr.y + sNext.y) / 2;
+        ctx.quadraticCurveTo(sCurr.x, sCurr.y, midX, midY);
+      }
+
+      // Final point
+      const sLast = smoothPoint(allPoints, allPoints.length - 1);
+      ctx.lineTo(sLast.x, sLast.y);
+
+      ctx.stroke();
+      lastDrawnIndex.current = allPoints.length - 1;
+
     } else if (currentTool === 'eraser') {
-      // For eraser, check all coalesced points
       for (const point of newPoints) {
-        currentPoints.current.push(point);
         const eraserRadius = currentSize * 4;
         findAllStrokesAtPoint(point, eraserRadius, pageIdx, erasedIndices.current);
       }
