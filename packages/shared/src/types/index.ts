@@ -10,6 +10,7 @@ export interface IStroke {
   color: string;
   size: number;
   tool: 'pen' | 'eraser';
+  pageIndex?: number; // defaults to 0 for backward compatibility
 }
 
 export interface IUser {

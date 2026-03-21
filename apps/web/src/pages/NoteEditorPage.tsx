@@ -112,10 +112,10 @@ export default function NoteEditorPage() {
   const handleStrokesChange = useCallback((strokes: IStroke[]) => {
     latestStrokesRef.current = strokes;
 
-    // Generate thumbnail
-    const canvas = document.querySelector('.drawing-canvas') as HTMLCanvasElement;
+    // Generate thumbnail from first page canvas
+    const firstPageCanvas = document.querySelector('.canvas-page:first-child .drawing-canvas') as HTMLCanvasElement;
     let thumbnail: string | undefined;
-    if (canvas) {
+    if (firstPageCanvas) {
       try {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = 240;
@@ -123,7 +123,7 @@ export default function NoteEditorPage() {
         const ctx = tempCanvas.getContext('2d')!;
         ctx.fillStyle = '#FAF8F5';
         ctx.fillRect(0, 0, 240, 160);
-        ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, 240, 160);
+        ctx.drawImage(firstPageCanvas, 0, 0, firstPageCanvas.width, firstPageCanvas.height, 0, 0, 240, 160);
         thumbnail = tempCanvas.toDataURL('image/png', 0.6);
       } catch (e) {
         // Ignore thumbnail generation errors

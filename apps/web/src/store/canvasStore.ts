@@ -8,6 +8,7 @@ interface CanvasState {
   currentTool: 'pen' | 'eraser';
   currentColor: string;
   currentSize: number;
+  pageCount: number;
   setTool: (tool: 'pen' | 'eraser') => void;
   setColor: (color: string) => void;
   setSize: (size: number) => void;
@@ -18,6 +19,8 @@ interface CanvasState {
   redo: () => void;
   loadStrokes: (strokes: IStroke[]) => void;
   clearAll: () => void;
+  addPage: () => void;
+  setPageCount: (count: number) => void;
 }
 
 export const useCanvasStore = create<CanvasState>((set) => ({
@@ -26,6 +29,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   currentTool: 'pen',
   currentColor: '#2D2A26',
   currentSize: 3,
+  pageCount: 2,
 
   setTool: (tool) => set({ currentTool: tool }),
   setColor: (color) => set({ currentColor: color, currentTool: 'pen' }),
@@ -70,6 +74,12 @@ export const useCanvasStore = create<CanvasState>((set) => ({
       return { strokes: [...s.strokes, last], redoStack: newRedo };
     }),
 
-  loadStrokes: (strokes) => set({ strokes, redoStack: [] }),
-  clearAll: () => set({ strokes: [], redoStack: [] }),
+  loadStrokes: (strokes) => {
+    // Calculate page count from existing strokes
+    const maxPage = strokes.reduce((max, s) => Math.max(max, s.pageIndex ?? 0), 0);
+    set({ strokes, redoStack: [], pageCount: Math.max(2, maxPage + 2) });
+  },
+  clearAll: () => set({ strokes: [], redoStack: [], pageCount: 2 }),
+  addPage: () => set((s) => ({ pageCount: s.pageCount + 1 })),
+  setPageCount: (count) => set({ pageCount: count }),
 }));

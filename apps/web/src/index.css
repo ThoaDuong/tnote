@@ -1000,22 +1000,53 @@ a {
 /* ================================ */
 /* HANDWRITING CANVAS               */
 /* ================================ */
-.canvas-container {
+.canvas-scroll-container {
   flex: 1;
   position: relative;
-  overflow: hidden;
-  background: var(--bg-card);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #E8E2DA;
+  padding: 24px 0 100px;
 }
 
-.drawing-canvas {
+.canvas-pages-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.canvas-page {
+  position: relative;
+  background: #FFFFFF;
+  border-radius: 4px;
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.canvas-page .drawing-canvas {
   display: block;
   touch-action: none;
   cursor: crosshair;
 }
 
+.page-number {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.25);
+  font-weight: 500;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* Toolbar */
 .canvas-toolbar {
-  position: absolute;
+  position: fixed;
   bottom: var(--space-lg);
   left: 50%;
   transform: translateX(-50%);
