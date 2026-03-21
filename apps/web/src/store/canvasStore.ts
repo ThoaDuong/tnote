@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { IStroke } from '@note-app/shared';
 
+
 interface CanvasState {
   strokes: IStroke[];
   redoStack: IStroke[];
@@ -12,6 +13,7 @@ interface CanvasState {
   setSize: (size: number) => void;
   addStroke: (stroke: IStroke) => void;
   removeStroke: (index: number) => void;
+  removeStrokes: (indices: number[]) => void;
   undo: () => void;
   redo: () => void;
   loadStrokes: (strokes: IStroke[]) => void;
@@ -36,6 +38,19 @@ export const useCanvasStore = create<CanvasState>((set) => ({
     set((s) => {
       const newStrokes = [...s.strokes];
       const removed = newStrokes.splice(index, 1);
+      return { strokes: newStrokes, redoStack: [...s.redoStack, ...removed] };
+    }),
+
+  removeStrokes: (indices) =>
+    set((s) => {
+      const sortedIndices = [...new Set(indices)].sort((a, b) => b - a);
+      const newStrokes = [...s.strokes];
+      const removed: IStroke[] = [];
+      for (const idx of sortedIndices) {
+        if (idx >= 0 && idx < newStrokes.length) {
+          removed.push(...newStrokes.splice(idx, 1));
+        }
+      }
       return { strokes: newStrokes, redoStack: [...s.redoStack, ...removed] };
     }),
 
