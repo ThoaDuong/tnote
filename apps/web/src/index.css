@@ -978,8 +978,9 @@ a {
 /* Text Editor */
 .text-editor-area {
   flex: 1;
-  padding: var(--space-xl);
+  background: #E8E2DA;
   overflow-y: auto;
+  padding: 32px 0 100px;
 }
 
 .text-editor-area textarea {

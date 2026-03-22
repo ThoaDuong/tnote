@@ -4,6 +4,7 @@ import { useNoteStore } from '../store/noteStore';
 import { useCanvasStore } from '../store/canvasStore';
 import { notesApi } from '../services/api';
 import HandwritingCanvas from '../components/HandwritingCanvas';
+import TextEditor from '../components/TextEditor';
 import type { INote, IStroke, NoteType } from '@note-app/shared';
 
 export default function NoteEditorPage() {
@@ -163,11 +164,9 @@ export default function NoteEditorPage() {
       {/* Editor Body */}
       {noteType === 'text' ? (
         <div className="text-editor-area">
-          <textarea
-            value={textContent}
-            onChange={(e) => handleTextChange(e.target.value)}
-            placeholder="Start writing your note..."
-            id="text-editor"
+          <TextEditor 
+            initialContent={textContent} 
+            onChange={handleTextChange} 
           />
         </div>
       ) : (

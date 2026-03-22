@@ -29,8 +29,20 @@ export class Stroke {
   @Prop({ required: true, default: 2 })
   size: number;
 
-  @Prop({ required: true, enum: ['pen', 'eraser'], default: 'pen' })
+  @Prop({ required: true, enum: ['pen', 'eraser', 'highlight', 'shape'], default: 'pen' })
   tool: string;
+
+  @Prop({ default: 0 })
+  pageIndex: number;
+
+  @Prop({ enum: ['rectangle', 'circle', 'ellipse', 'star', 'triangle', 'diamond'] })
+  shapeType: string;
+
+  @Prop()
+  opacity: number;
+
+  @Prop({ type: Object })
+  boundingBox: { x: number; y: number; width: number; height: number };
 }
 
 export const StrokeSchema = SchemaFactory.createForClass(Stroke);

@@ -1,0 +1,21 @@
+.notion-editor-container {
+  padding: 80px 100px;
+  width: 900px;
+  max-width: calc(100% - 48px);
+  margin: 0 auto;
+  text-align: left;
+  font-family: inherit;
+  color: var(--text-primary);
+  min-height: 1040px;
+  background-color: #FFFFFF;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.notion-editor-container * {
+  box-sizing: border-box;
+}
+
+.bn-container {
+  font-family: inherit;
+}
