@@ -5,12 +5,18 @@ export interface IPoint {
   timestamp: number;
 }
 
+export type ToolType = 'pen' | 'eraser' | 'highlight' | 'shape';
+export type ShapeType = 'rectangle' | 'circle' | 'ellipse' | 'star' | 'triangle' | 'diamond';
+
 export interface IStroke {
   points: IPoint[];
   color: string;
   size: number;
-  tool: 'pen' | 'eraser';
-  pageIndex?: number; // defaults to 0 for backward compatibility
+  tool: ToolType;
+  pageIndex?: number;
+  shapeType?: ShapeType;
+  opacity?: number;
+  boundingBox?: { x: number; y: number; width: number; height: number };
 }
 
 export interface IUser {

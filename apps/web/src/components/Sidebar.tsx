@@ -46,7 +46,7 @@ export default function Sidebar() {
       {/* Header */}
       <div className="sidebar-header">
         <div className="sidebar-logo">📝</div>
-        <span className="sidebar-brand">NoteFlow</span>
+        <span className="sidebar-brand">TNote</span>
       </div>
 
       {/* Search */}
