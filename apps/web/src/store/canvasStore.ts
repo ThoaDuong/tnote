@@ -79,7 +79,7 @@ interface CanvasState {
   setPageCount: (count: number) => void;
 }
 
-export const useCanvasStore = create<CanvasState>((set, get) => ({
+export const useCanvasStore = create<CanvasState>((set) => ({
   strokes: [],
   redoStack: [],
   pageCount: 2,
