@@ -35,6 +35,12 @@ export class NotesService {
     return note;
   }
 
+  async findPublicById(id: string): Promise<Note> {
+    const note = await this.noteModel.findOne({ _id: id, isPublic: true }).exec();
+    if (!note) throw new NotFoundException('Note is not public or not found');
+    return note;
+  }
+
   async create(userId: string, data: any): Promise<Note> {
     return this.noteModel.create({ ...data, userId });
   }

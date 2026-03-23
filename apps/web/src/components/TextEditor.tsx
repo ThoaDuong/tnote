@@ -9,9 +9,10 @@ import './TextEditor.css';
 interface TextEditorProps {
   initialContent: string;
   onChange: (content: string) => void;
+  readOnly?: boolean;
 }
 
-export default function TextEditor({ initialContent, onChange }: TextEditorProps) {
+export default function TextEditor({ initialContent, onChange, readOnly = false }: TextEditorProps) {
   // Parse initial content, protecting against the old incompatible format
   const parsedContent = useMemo(() => {
     if (!initialContent) return undefined;
@@ -40,10 +41,13 @@ export default function TextEditor({ initialContent, onChange }: TextEditorProps
       <BlockNoteView
         editor={editor}
         onChange={() => {
-          // Serialize the newly updated document back to JSON string
-          onChange(JSON.stringify(editor.document));
+          if (!readOnly) {
+            // Serialize the newly updated document back to JSON string
+            onChange(JSON.stringify(editor.document));
+          }
         }}
         theme="light"
+        editable={!readOnly}
       />
     </div>
   );

@@ -20,6 +20,8 @@ export default function NoteEditorPage() {
   const [textContent, setTextContent] = useState('');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const saveTimerRef = useRef<any>(null);
   const noteIdRef = useRef<string | null>(null);
@@ -41,6 +43,7 @@ export default function NoteEditorPage() {
         setTitle(data.title);
         setNoteType(data.type as NoteType);
         setTextContent(data.textContent || '');
+        setIsPublic(data.isPublic || false);
         noteIdRef.current = data._id;
         if (data.strokes) {
           loadStrokes(data.strokes);
@@ -159,6 +162,86 @@ export default function NoteEditorPage() {
         <span className={`save-indicator ${saveStatus}`}>
           {saveStatus === 'saving' ? '💾 Saving...' : saveStatus === 'saved' ? '✅ Saved' : ''}
         </span>
+
+        {/* Share Button & Popover */}
+        <div style={{ position: 'relative', marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+          <button 
+            className="share-btn" 
+            style={{ 
+              backgroundColor: '#2DAADB', color: '#fff', border: 'none', 
+              padding: '6px 16px', borderRadius: '4px', cursor: 'pointer',
+              fontWeight: 500
+            }}
+            onClick={() => setIsShareOpen(!isShareOpen)}
+          >
+            Share
+          </button>
+
+          {isShareOpen && (
+            <div 
+              style={{
+                position: 'absolute', top: '40px', right: '0', 
+                backgroundColor: '#fff', borderRadius: '8px', 
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)', width: '300px',
+                padding: '16px', zIndex: 1000
+              }}
+            >
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#333' }}>Share this note</h3>
+              
+              <div 
+                style={{ 
+                  padding: '8px', borderRadius: '4px', cursor: 'pointer',
+                  backgroundColor: !isPublic ? 'rgba(45,170,219,0.1)' : 'transparent',
+                  display: 'flex', alignItems: 'center', gap: '8px'
+                }}
+                onClick={() => { setIsPublic(false); triggerSave({ isPublic: false }); }}
+              >
+                🔒 <div style={{ flex: 1 }}><div style={{ fontWeight: 500, fontSize: '13px' }}>Only me</div><div style={{ fontSize: '11px', color: '#666' }}>Private to you</div></div>
+                {!isPublic && <span style={{ color: '#2DAADB' }}>✓</span>}
+              </div>
+
+              <div 
+                style={{ 
+                  padding: '8px', borderRadius: '4px', cursor: 'pointer',
+                  backgroundColor: isPublic ? 'rgba(45,170,219,0.1)' : 'transparent',
+                  display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px'
+                }}
+                onClick={() => { setIsPublic(true); triggerSave({ isPublic: true }); }}
+              >
+                🌐 <div style={{ flex: 1 }}><div style={{ fontWeight: 500, fontSize: '13px' }}>Anyone with the link</div><div style={{ fontSize: '11px', color: '#666' }}>Can view only</div></div>
+                {isPublic && <span style={{ color: '#2DAADB' }}>✓</span>}
+              </div>
+
+              {isPublic && noteIdRef.current && (
+                <div style={{ marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '16px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input 
+                      readOnly 
+                      value={`${window.location.origin}/share/${noteIdRef.current}`}
+                      style={{ 
+                        flex: 1, padding: '6px 8px', borderRadius: '4px', 
+                        border: '1px solid #ddd', fontSize: '12px', outline: 'none'
+                      }}
+                      onClick={(e) => e.currentTarget.select()}
+                    />
+                    <button 
+                      style={{ 
+                        padding: '6px 12px', backgroundColor: '#f1f1f1', 
+                        border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer', fontSize: '12px'
+                      }}
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/share/${noteIdRef.current}`);
+                        alert('Link copied to clipboard!');
+                      }}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Editor Body */}

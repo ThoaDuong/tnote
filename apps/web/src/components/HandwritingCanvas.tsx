@@ -6,9 +6,10 @@ import SelectionActions from './canvas/SelectionActions';
 
 interface HandwritingCanvasProps {
   onStrokesChange?: (strokes: IStroke[]) => void;
+  readOnly?: boolean;
 }
 
-export default function HandwritingCanvas({ onStrokesChange }: HandwritingCanvasProps) {
+export default function HandwritingCanvas({ onStrokesChange, readOnly = false }: HandwritingCanvasProps) {
   const { pageCount } = useCanvasStore();
 
   const {
@@ -36,22 +37,22 @@ export default function HandwritingCanvas({ onStrokesChange }: HandwritingCanvas
               <canvas
                 ref={setCanvasRef(pageIdx)}
                 className="drawing-canvas"
-                style={{ touchAction: 'none', cursor: getCursor() }}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerLeave={handlePointerUp}
-                onPointerCancel={handlePointerUp}
+                style={{ touchAction: 'none', cursor: readOnly ? 'default' : getCursor(), pointerEvents: readOnly ? 'none' : 'auto' }}
+                onPointerDown={readOnly ? undefined : handlePointerDown}
+                onPointerMove={readOnly ? undefined : handlePointerMove}
+                onPointerUp={readOnly ? undefined : handlePointerUp}
+                onPointerLeave={readOnly ? undefined : handlePointerUp}
+                onPointerCancel={readOnly ? undefined : handlePointerUp}
               />
               <div className="page-number">{pageIdx + 1}</div>
             </div>
           ))}
         </div>
 
-        <SelectionActions />
+        {!readOnly && <SelectionActions />}
       </div>
 
-      <CanvasToolbar showSettings={showSettings} onShowSettings={setShowSettings} />
+      {!readOnly && <CanvasToolbar showSettings={showSettings} onShowSettings={setShowSettings} />}
     </>
   );
 }

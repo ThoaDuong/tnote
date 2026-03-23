@@ -77,6 +77,9 @@ export class Note extends Document {
 
   @Prop()
   canvasHeight: number;
+
+  @Prop({ default: false })
+  isPublic: boolean;
 }
 
 export const NoteSchema = SchemaFactory.createForClass(Note);

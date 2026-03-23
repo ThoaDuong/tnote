@@ -55,6 +55,8 @@ export interface INote {
   canvasWidth?: number;
   canvasHeight?: number;
 
+  isPublic?: boolean;
+
   createdAt: string;
   updatedAt: string;
 }
@@ -87,4 +89,5 @@ export interface UpdateNoteDto {
   thumbnail?: string;
   canvasWidth?: number;
   canvasHeight?: number;
+  isPublic?: boolean;
 }
