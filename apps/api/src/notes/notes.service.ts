@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Note } from './note.schema';
+import { NoteType } from '@note-app/shared';
 
 @Injectable()
 export class NotesService {
@@ -9,7 +10,7 @@ export class NotesService {
 
   async findAllByUser(
     userId: string,
-    options?: { folderId?: string; search?: string },
+    options?: { folderId?: string; search?: string; type?: NoteType; limit?: number },
   ): Promise<Note[]> {
     const query: any = { userId };
 
@@ -21,12 +22,20 @@ export class NotesService {
       query.title = { $regex: options.search, $options: 'i' };
     }
 
-    // Exclude strokes from list queries for performance
-    return this.noteModel
+    if (options?.type) {
+      query.type = options.type;
+    }
+
+    let queryBuilder = this.noteModel
       .find(query)
       .select('-strokes')
-      .sort({ updatedAt: -1 })
-      .exec();
+      .sort({ updatedAt: -1 });
+
+    if (options?.limit) {
+      queryBuilder = queryBuilder.limit(Number(options.limit));
+    }
+
+    return queryBuilder.exec();
   }
 
   async findById(id: string, userId: string): Promise<Note> {

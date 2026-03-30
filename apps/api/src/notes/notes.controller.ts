@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/auth.guards';
 import { NotesService } from './notes.service';
+import { NoteType } from '@note-app/shared';
 
 @Controller('notes')
 @UseGuards(JwtAuthGuard)
@@ -23,8 +24,10 @@ export class NotesController {
     @Req() req: any,
     @Query('folderId') folderId?: string,
     @Query('search') search?: string,
+    @Query('type') type?: NoteType,
+    @Query('limit') limit?: number,
   ) {
-    return this.notesService.findAllByUser(req.user._id, { folderId, search });
+    return this.notesService.findAllByUser(req.user._id, { folderId, search, type, limit });
   }
 
   @Get(':id')

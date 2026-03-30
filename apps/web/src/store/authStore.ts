@@ -21,6 +21,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   setToken: (token: string) => {
     localStorage.setItem('token', token);
+    document.cookie = `token=${token}; path=/; max-age=2592000; samesite=Lax`;
     set({ token, isAuthenticated: true });
   },
 
@@ -36,6 +37,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: () => {
     localStorage.removeItem('token');
+    document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     set({ user: null, token: null, isAuthenticated: false });
   },
 
