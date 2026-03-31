@@ -29,7 +29,7 @@ export class NotesService {
     let queryBuilder = this.noteModel
       .find(query)
       .select('-strokes')
-      .sort({ updatedAt: -1 });
+      .sort({ isPinned: -1, updatedAt: -1 }); // pinned notes first
 
     if (options?.limit) {
       queryBuilder = queryBuilder.limit(Number(options.limit));
@@ -47,6 +47,12 @@ export class NotesService {
   async findPublicById(id: string): Promise<Note> {
     const note = await this.noteModel.findOne({ _id: id, isPublic: true }).exec();
     if (!note) throw new NotFoundException('Note is not public or not found');
+    return note;
+  }
+
+  async findQuickNote(userId: string, quickNoteId: string): Promise<Note> {
+    const note = await this.noteModel.findOne({ _id: quickNoteId, userId }).exec();
+    if (!note) throw new NotFoundException('Quick note not found');
     return note;
   }
 

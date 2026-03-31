@@ -8,7 +8,7 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-logo">📝</div>
+        <img src="/tnote.png" alt="TNote" className="login-logo" />
         <h1 className="login-title">TNote</h1>
         <p className="login-subtitle">
           Capture your ideas beautifully.<br />

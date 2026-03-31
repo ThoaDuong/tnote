@@ -80,6 +80,12 @@ export class Note extends Document {
 
   @Prop({ default: false })
   isPublic: boolean;
+
+  @Prop({ default: false })
+  isQuickNote: boolean;
+
+  @Prop({ default: false })
+  isPinned: boolean;
 }
 
 export const NoteSchema = SchemaFactory.createForClass(Note);

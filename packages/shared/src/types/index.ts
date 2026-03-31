@@ -25,6 +25,7 @@ export interface IUser {
   email: string;
   displayName: string;
   avatar: string;
+  quickNoteId?: string;
   createdAt: string;
 }
 
@@ -56,6 +57,8 @@ export interface INote {
   canvasHeight?: number;
 
   isPublic?: boolean;
+  isQuickNote?: boolean;
+  isPinned?: boolean;
 
   createdAt: string;
   updatedAt: string;

@@ -80,7 +80,9 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   background-color: var(--bg-primary);
   color: var(--text-primary);
@@ -96,7 +98,8 @@ button {
   background: none;
 }
 
-input, textarea {
+input,
+textarea {
   font-family: inherit;
   outline: none;
   border: none;
@@ -126,15 +129,41 @@ a {
 }
 
 /* Utility */
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-.justify-between { justify-content: space-between; }
-.gap-xs { gap: var(--space-xs); }
-.gap-sm { gap: var(--space-sm); }
-.gap-md { gap: var(--space-md); }
-.gap-lg { gap: var(--space-lg); }
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-xs {
+  gap: var(--space-xs);
+}
+
+.gap-sm {
+  gap: var(--space-sm);
+}
+
+.gap-md {
+  gap: var(--space-md);
+}
+
+.gap-lg {
+  gap: var(--space-lg);
+}
 
 /* ================================ */
 /* LOGIN PAGE                       */
@@ -185,14 +214,21 @@ a {
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .login-logo {
   width: 72px;
   height: 72px;
-  background: linear-gradient(135deg, var(--accent-primary) 0%, #E8955E 100%);
+  padding: 5px;
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
@@ -284,7 +320,6 @@ a {
 .sidebar-logo {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, var(--accent-primary) 0%, #E8955E 100%);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -660,8 +695,13 @@ a {
   background: var(--bg-primary);
 }
 
-.note-card-type.text { color: var(--accent-blue); }
-.note-card-type.handwriting { color: var(--accent-primary); }
+.note-card-type.text {
+  color: var(--accent-blue);
+}
+
+.note-card-type.handwriting {
+  color: var(--accent-primary);
+}
 
 .note-card-delete {
   opacity: 0;
@@ -727,8 +767,13 @@ a {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modal {
@@ -741,8 +786,15 @@ a {
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .modal-header {
@@ -1112,8 +1164,15 @@ a {
 }
 
 @keyframes popupSlideUp {
-  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 .settings-section {
@@ -1156,7 +1215,7 @@ a {
   cursor: pointer;
   transition: all var(--transition-fast);
   border: 2.5px solid transparent;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .color-swatch:hover {
@@ -1227,7 +1286,7 @@ a {
   top: 2px;
   left: 2px;
   transition: transform var(--transition-fast);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .toggle-switch.on .toggle-thumb {
@@ -1288,7 +1347,9 @@ a {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Toast notification */
@@ -1308,8 +1369,15 @@ a {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ================================ */

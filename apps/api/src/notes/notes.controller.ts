@@ -9,6 +9,7 @@ import {
   Query,
   Req,
   UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/auth.guards';
 import { NotesService } from './notes.service';
@@ -18,6 +19,15 @@ import { NoteType } from '@note-app/shared';
 @UseGuards(JwtAuthGuard)
 export class NotesController {
   constructor(private notesService: NotesService) {}
+
+  @Get('quick')
+  async getQuickNote(@Req() req: any) {
+    const user = req.user;
+    if (!user.quickNoteId) {
+      throw new NotFoundException('No quick note set for this user');
+    }
+    return this.notesService.findQuickNote(user._id.toString(), user.quickNoteId.toString());
+  }
 
   @Get()
   findAll(

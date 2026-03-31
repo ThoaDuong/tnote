@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import type { PartialBlock } from "@blocknote/core";
@@ -13,28 +13,49 @@ interface TextEditorProps {
 }
 
 export default function TextEditor({ initialContent, onChange, readOnly = false }: TextEditorProps) {
-  // Parse initial content, protecting against the old incompatible format
+  const htmlLoadedRef = useRef(false);
+
+  // Parse initial content — supports BlockNote JSON
   const parsedContent = useMemo(() => {
     if (!initialContent) return undefined;
     try {
       const data = JSON.parse(initialContent);
       if (Array.isArray(data) && data.length > 0) {
-        // Drop the old format (where content was a raw string instead of an array) to prevent crashes
-        if (typeof data[0].content === 'string') {
-          return undefined;
-        }
+        if (typeof data[0].content === 'string') return undefined; // old incompatible format
         return data as PartialBlock[];
       }
     } catch {
-      return undefined;
+      // Not JSON — could be HTML from Tiptap extension
     }
     return undefined;
   }, [initialContent]);
 
-  // Automatically creates a BlockNote editor instance
+  // Detect raw HTML content (from Tiptap extension)
+  const isHTML = useMemo(() => {
+    if (!initialContent || parsedContent) return false;
+    const trimmed = initialContent.trim();
+    return trimmed.startsWith('<') && trimmed.length > 0;
+  }, [initialContent, parsedContent]);
+
   const editor = useCreateBlockNote({
     initialContent: parsedContent,
   });
+
+  // If HTML content (from Tiptap extension), convert to BlockNote blocks
+  // tryParseHTMLToBlocks is synchronous in BlockNote 0.47.x
+  useEffect(() => {
+    if (isHTML && !htmlLoadedRef.current && editor && initialContent) {
+      htmlLoadedRef.current = true;
+      try {
+        const blocks = editor.tryParseHTMLToBlocks(initialContent) as PartialBlock[];
+        if (blocks && blocks.length > 0) {
+          editor.replaceBlocks(editor.document, blocks);
+        }
+      } catch (e) {
+        console.error('Failed to parse HTML content:', e);
+      }
+    }
+  }, [isHTML, editor, initialContent]);
 
   return (
     <div className="notion-editor-container" style={{ padding: '40px' }}>
@@ -42,7 +63,6 @@ export default function TextEditor({ initialContent, onChange, readOnly = false 
         editor={editor}
         onChange={() => {
           if (!readOnly) {
-            // Serialize the newly updated document back to JSON string
             onChange(JSON.stringify(editor.document));
           }
         }}

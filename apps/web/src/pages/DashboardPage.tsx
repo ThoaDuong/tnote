@@ -34,10 +34,16 @@ export default function DashboardPage() {
     setNewNoteTitle('');
   };
 
-  const handleDeleteNote = async (e: React.MouseEvent, noteId: string) => {
+  const handleDeleteNote = async (e: React.MouseEvent, note: { _id: string; isQuickNote?: boolean }) => {
     e.stopPropagation();
+    if (note.isQuickNote) {
+      alert(
+        'This note is your Quick Note and cannot be deleted.\n\nTo delete it, first change your Quick Note to another text note using the TNote Extension.'
+      );
+      return;
+    }
     if (confirm('Delete this note?')) {
-      await deleteNote(noteId);
+      await deleteNote(note._id);
     }
   };
 
@@ -99,7 +105,10 @@ export default function DashboardPage() {
                   )}
                 </div>
                 <div className="note-card-info">
-                  <div className="note-card-title">{note.title}</div>
+                  <div className="note-card-title">
+                    {note.isQuickNote && <span style={{ fontSize: 11, color: '#8B7EC8', marginRight: 4 }}>⚡</span>}
+                    {note.title}
+                  </div>
                   <div className="note-card-meta">
                     <span className={`note-card-type ${note.type}`}>
                       {note.type === 'handwriting' ? '✏️' : '📄'} {note.type}
@@ -107,7 +116,7 @@ export default function DashboardPage() {
                     <span>{formatDate(note.updatedAt)}</span>
                     <button
                       className="note-card-delete"
-                      onClick={(e) => handleDeleteNote(e, note._id)}
+                      onClick={(e) => handleDeleteNote(e, note)}
                     >
                       🗑️
                     </button>

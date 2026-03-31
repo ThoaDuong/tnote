@@ -45,7 +45,7 @@ export default function Sidebar() {
     <div className="sidebar">
       {/* Header */}
       <div className="sidebar-header">
-        <div className="sidebar-logo">📝</div>
+        <img src="/tnote.png" alt="TNote" className="sidebar-logo" />
         <span className="sidebar-brand">TNote</span>
       </div>
 

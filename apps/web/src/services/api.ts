@@ -36,7 +36,13 @@ export const notesApi = {
     api.get<INote[]>('/notes', { params }).then(r => r.data),
   getById: (id: string) => api.get<INote>(`/notes/${id}`).then(r => r.data),
   getPublicById: (id: string) => api.get<INote>(`/public/notes/${id}`).then(r => r.data),
+  getQuickNote: () => api.get<INote>('/notes/quick').then(r => r.data),
   create: (data: CreateNoteDto) => api.post<INote>('/notes', data).then(r => r.data),
   update: (id: string, data: UpdateNoteDto) => api.patch<INote>(`/notes/${id}`, data).then(r => r.data),
   delete: (id: string) => api.delete(`/notes/${id}`),
+};
+
+// Users
+export const usersApi = {
+  setQuickNote: (noteId: string) => api.patch<IUser>('/users/quick-note', { noteId }).then(r => r.data),
 };
