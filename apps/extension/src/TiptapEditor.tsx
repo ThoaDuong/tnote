@@ -20,46 +20,73 @@ function blockNoteToHTML(content: string): string {
   try {
     const blocks: any[] = JSON.parse(content);
     if (!Array.isArray(blocks)) return '';
-    return blocks
-      .map((block: any) => {
-        const inlineToHTML = (items: any[]): string =>
-          (items || [])
-            .map((c: any) => {
-              if (c.type === 'link') {
-                const inner = inlineToHTML(c.content || []);
-                return `<a href="${c.href || '#'}">${inner}</a>`;
-              }
-              let t = (c.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-              if (c.styles?.bold) t = `<strong>${t}</strong>`;
-              if (c.styles?.italic) t = `<em>${t}</em>`;
-              if (c.styles?.underline) t = `<u>${t}</u>`;
-              if (c.styles?.strike) t = `<s>${t}</s>`;
-              if (c.styles?.code) t = `<code>${t}</code>`;
-              return t;
-            })
-            .join('');
+    
+    let html = '';
+    let currentListType: 'ul' | 'ol' | null = null;
+    
+    for (const block of blocks) {
+      const inlineToHTML = (items: any[]): string =>
+        (items || [])
+          .map((c: any) => {
+            if (c.type === 'link') {
+              const inner = inlineToHTML(c.content || []);
+              return `<a href="${c.href || '#'}">${inner}</a>`;
+            }
+            let t = (c.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            if (c.styles?.bold) t = `<strong>${t}</strong>`;
+            if (c.styles?.italic) t = `<em>${t}</em>`;
+            if (c.styles?.underline) t = `<u>${t}</u>`;
+            if (c.styles?.strike) t = `<s>${t}</s>`;
+            if (c.styles?.code) t = `<code>${t}</code>`;
+            return t;
+          })
+          .join('');
 
-        const children = block.children?.length
-          ? `<ul>${block.children.map((child: any) => `<li>${inlineToHTML(child.content || [])}</li>`).join('')}</ul>`
-          : '';
+      const childrenHtml = block.children?.length
+        ? `<ul>${block.children.map((child: any) => `<li>${inlineToHTML(child.content || [])}</li>`).join('')}</ul>`
+        : '';
 
-        const text = inlineToHTML(block.content || []);
-        switch (block.type) {
-          case 'heading':
-            return `<h${block.props?.level || 1}>${text}</h${block.props?.level || 1}>${children}`;
-          case 'bulletListItem':
-            return `<li>${text}${children}</li>`;
-          case 'numberedListItem':
-            return `<li>${text}${children}</li>`;
-          case 'checkListItem':
-            return `<li>${text}${children}</li>`;
-          case 'codeBlock':
-            return `<pre><code>${text}</code></pre>`;
-          default:
-            return text ? `<p>${text}</p>` : `<p></p>`;
-        }
-      })
-      .join('\n');
+      const text = inlineToHTML(block.content || []);
+      
+      const isBullet = block.type === 'bulletListItem' || block.type === 'checkListItem';
+      const isNumbered = block.type === 'numberedListItem';
+      const listType = isBullet ? 'ul' : (isNumbered ? 'ol' : null);
+      
+      // Close previous list if list type changed
+      if (currentListType && currentListType !== listType) {
+        html += `</${currentListType}>\n`;
+        currentListType = null;
+      }
+      
+      // Open new list if needed
+      if (listType && currentListType !== listType) {
+        html += `<${listType}>\n`;
+        currentListType = listType;
+      }
+      
+      switch (block.type) {
+        case 'heading':
+          html += `<h${block.props?.level || 1}>${text}</h${block.props?.level || 1}>\n${childrenHtml}`;
+          break;
+        case 'bulletListItem':
+        case 'numberedListItem':
+        case 'checkListItem':
+          html += `<li>${text}${childrenHtml}</li>\n`;
+          break;
+        case 'codeBlock':
+          html += `<pre><code>${text}</code></pre>\n`;
+          break;
+        default:
+          html += text ? `<p>${text}</p>\n` : `<p></p>\n`;
+          break;
+      }
+    }
+    
+    if (currentListType) {
+      html += `</${currentListType}>\n`;
+    }
+    
+    return html;
   } catch {
     return `<p>${content}</p>`;
   }

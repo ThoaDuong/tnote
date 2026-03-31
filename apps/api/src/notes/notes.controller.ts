@@ -22,11 +22,11 @@ export class NotesController {
 
   @Get('quick')
   async getQuickNote(@Req() req: any) {
-    const user = req.user;
-    if (!user.quickNoteId) {
-      throw new NotFoundException('No quick note set for this user');
+    const note = await this.notesService.findOrAssignQuickNote(req.user._id.toString());
+    if (!note) {
+      throw new NotFoundException('No quick note found. Login at TNote web to create one.');
     }
-    return this.notesService.findQuickNote(user._id.toString(), user.quickNoteId.toString());
+    return note;
   }
 
   @Get()

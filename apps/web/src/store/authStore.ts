@@ -47,6 +47,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoading: false });
       return;
     }
+    // Ensure cookie exists for Chrome extension to read
+    document.cookie = `token=${token}; path=/; max-age=2592000; samesite=Lax`;
     await get().fetchUser();
   },
 }));

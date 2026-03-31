@@ -30,6 +30,20 @@ export class UsersService {
       existing.email = profile.email;
       existing.displayName = profile.displayName;
       existing.avatar = profile.avatar;
+
+      // Ensure existing user has a quick note (for users registered before this feature)
+      if (!existing.quickNoteId) {
+        const quickNote = await this.noteModel.create({
+          title: 'Quick Note',
+          type: 'text',
+          textContent: '',
+          userId: existing._id,
+          isQuickNote: true,
+          isPinned: true,
+        });
+        existing.quickNoteId = quickNote._id as any;
+      }
+
       return existing.save();
     }
 

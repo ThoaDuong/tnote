@@ -1,6 +1,18 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 import { authApi } from '../services/api';
 
 export default function LoginPage() {
+  const { isAuthenticated, isLoading } = useAuthStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
   const handleGoogleLogin = () => {
     window.location.href = authApi.getGoogleLoginUrl();
   };
