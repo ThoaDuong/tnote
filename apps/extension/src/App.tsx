@@ -19,6 +19,7 @@ function App() {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [quickNote, setQuickNote] = useState<Note | null>(null);
+  const [user, setUser] = useState<{ displayName: string; email: string; avatar: string } | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [showPicker, setShowPicker] = useState(false);
   const [textNotes, setTextNotes] = useState<Note[]>([]);
@@ -46,7 +47,7 @@ function App() {
       chrome.cookies.get({ url: WEB_URL, name: 'token' }, (cookie: any) => {
         if (cookie?.value) {
           setToken(cookie.value);
-          fetchQuickNote(cookie.value);
+          fetchUserAndNote(cookie.value);
         } else {
           setLoading(false);
         }
@@ -55,10 +56,29 @@ function App() {
       const tkn = localStorage.getItem('token');
       if (tkn) {
         setToken(tkn);
-        fetchQuickNote(tkn);
+        fetchUserAndNote(tkn);
       } else {
         setLoading(false);
       }
+    }
+  };
+
+  const fetchUserAndNote = async (tkn: string) => {
+    try {
+      // Fetch user profile
+      const userRes = await fetch(`${API_URL}/auth/me`, {
+        headers: authHeaders(tkn),
+      });
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        setUser(userData);
+      }
+      
+      // Fetch quick note
+      await fetchQuickNote(tkn);
+    } catch (e) {
+      console.error('Failed to fetch user data', e);
+      setLoading(false);
     }
   };
 
@@ -136,22 +156,12 @@ function App() {
     }
   };
 
-  const handleChangeQuickNote = async (note: Note) => {
+  const handleSwitchNote = async (note: Note) => {
     if (!token) return;
-    try {
-      await fetch(`${API_URL}/users/quick-note`, {
-        method: 'PATCH',
-        headers: authHeaders(token),
-        body: JSON.stringify({ noteId: note._id }),
-      });
-      setQuickNote(note);
-      quickNoteIdRef.current = note._id;
-      setShowPicker(false);
-      // Reset save timer
-      setSaveStatus('idle');
-    } catch (e) {
-      console.error('Failed to change quick note', e);
-    }
+    setQuickNote(note);
+    quickNoteIdRef.current = note._id;
+    setShowPicker(false);
+    setSaveStatus('idle');
   };
 
   const openInWeb = () => {
@@ -199,7 +209,24 @@ function App() {
       {/* Header */}
       <div className="header">
         <img src="/tnote.png" alt="TNote" className="header-logo" />
-        <span className="header-title">Quick Note</span>
+        <span className="header-title">{quickNote?.title || 'Quick Note'}</span>
+        
+        {user && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '4px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.2 }}>{user.displayName}</span>
+              <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{user.email}</span>
+            </div>
+            {user.avatar ? (
+              <img src={user.avatar} alt="User" style={{ width: 22, height: 22, borderRadius: '50%' }} />
+            ) : (
+              <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600 }}>
+                {user.displayName?.[0] || '?'}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="header-actions">
           {saveStatus === 'saving' && <span className="save-indicator saving">Saving…</span>}
           {saveStatus === 'saved' && <span className="save-indicator saved">✓ Saved</span>}
@@ -213,7 +240,7 @@ function App() {
           <button
             className="icon-btn change-btn"
             onClick={openPicker}
-            title="Change quick note"
+            title="Switch note"
           >
             ⇄
           </button>
@@ -242,7 +269,7 @@ function App() {
         <div className="picker-overlay" onClick={() => setShowPicker(false)}>
           <div className="picker-modal" onClick={(e) => e.stopPropagation()}>
             <div className="picker-header">
-              <span>Change Quick Note</span>
+              <span>Switch Note</span>
               <button className="picker-close" onClick={() => setShowPicker(false)}>×</button>
             </div>
             <div className="picker-body">
@@ -256,7 +283,7 @@ function App() {
                     <li
                       key={note._id}
                       className={`picker-item ${note._id === quickNoteIdRef.current ? 'current' : ''}`}
-                      onClick={() => handleChangeQuickNote(note)}
+                      onClick={() => handleSwitchNote(note)}
                     >
                       <span className="picker-item-title">{note.title}</span>
                       {note._id === quickNoteIdRef.current && (

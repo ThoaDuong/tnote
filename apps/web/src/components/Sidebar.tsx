@@ -143,7 +143,10 @@ export default function Sidebar() {
               {user?.displayName?.[0] || '?'}
             </div>
           )}
-          <span className="user-name">{user?.displayName || 'User'}</span>
+          <div className="user-info" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+            <span className="user-name" style={{ lineHeight: '1.2' }}>{user?.displayName || 'User'}</span>
+            <span className="user-email" style={{ fontSize: 11, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email || ''}</span>
+          </div>
           <button className="logout-btn" onClick={logout} title="Logout">
             ↪
           </button>

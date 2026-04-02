@@ -43,7 +43,7 @@ function blockNoteToHTML(content: string): string {
           .join('');
 
       const childrenHtml = block.children?.length
-        ? `<ul>${block.children.map((child: any) => `<li>${inlineToHTML(child.content || [])}</li>`).join('')}</ul>`
+        ? `<ul>${block.children.map((child: any) => `<li><p>${inlineToHTML(child.content || [])}</p></li>`).join('')}</ul>`
         : '';
 
       const text = inlineToHTML(block.content || []);
@@ -71,7 +71,7 @@ function blockNoteToHTML(content: string): string {
         case 'bulletListItem':
         case 'numberedListItem':
         case 'checkListItem':
-          html += `<li>${text}${childrenHtml}</li>\n`;
+          html += `<li><p>${text}</p>${childrenHtml}</li>\n`;
           break;
         case 'codeBlock':
           html += `<pre><code>${text}</code></pre>\n`;
