@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { IUser } from '@note-app/shared';
-import { authApi } from '../services/api';
+import { authApi, usersApi } from '../services/api';
 
 interface AuthState {
   user: IUser | null;
@@ -11,6 +11,7 @@ interface AuthState {
   fetchUser: () => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;
+  updateQuickNote: (noteId: string) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -50,5 +51,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // Ensure cookie exists for Chrome extension to read
     document.cookie = `token=${token}; path=/; max-age=2592000; samesite=Lax`;
     await get().fetchUser();
+  },
+
+  updateQuickNote: async (noteId: string) => {
+    try {
+      const user = await usersApi.setQuickNote(noteId);
+      set({ user });
+    } catch (err) {
+      console.error('Failed to update quick note:', err);
+      throw err;
+    }
   },
 }));

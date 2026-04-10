@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFolderStore } from '../store/folderStore';
 import { useNoteStore } from '../store/noteStore';
+import { useAuthStore } from '../store/authStore';
 import Sidebar from '../components/Sidebar';
 import type { NoteType } from '@note-app/shared';
 
@@ -9,13 +10,22 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { folders, activeFolderId, fetchFolders } = useFolderStore();
   const { notes, isLoading, fetchNotes, deleteNote } = useNoteStore();
+  const { user, updateQuickNote } = useAuthStore();
   const [showNewNoteModal, setShowNewNoteModal] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState('');
   const [newNoteType, setNewNoteType] = useState<NoteType>('text');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchFolders();
     fetchNotes(null);
+  }, []);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setOpenMenuId(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
   }, []);
 
   const activeFolder = folders.find((f) => f._id === activeFolderId);
@@ -36,14 +46,26 @@ export default function DashboardPage() {
 
   const handleDeleteNote = async (e: React.MouseEvent, note: { _id: string; isQuickNote?: boolean }) => {
     e.stopPropagation();
+    setOpenMenuId(null);
     if (note.isQuickNote) {
       alert(
-        'This note is your Quick Note and cannot be deleted.\n\nTo delete it, first change your Quick Note to another text note using the TNote Extension.'
+        'This note is your Quick Note and cannot be deleted.\n\nTo delete it, first change your Quick Note to another text note.'
       );
       return;
     }
     if (confirm('Delete this note?')) {
       await deleteNote(note._id);
+    }
+  };
+
+  const handleSetQuickNote = async (e: React.MouseEvent, noteId: string) => {
+    e.stopPropagation();
+    setOpenMenuId(null);
+    try {
+      await updateQuickNote(noteId);
+      alert('Quick Note updated!');
+    } catch (err) {
+      alert('Failed to update Quick Note.');
     }
   };
 
@@ -114,12 +136,36 @@ export default function DashboardPage() {
                       {note.type === 'handwriting' ? '✏️' : '📄'} {note.type}
                     </span>
                     <span>{formatDate(note.updatedAt)}</span>
-                    <button
-                      className="note-card-delete"
-                      onClick={(e) => handleDeleteNote(e, note)}
-                    >
-                      🗑️
-                    </button>
+                    <div className="note-card-menu-container">
+                      <button
+                        className="note-card-menu-trigger"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === note._id ? null : note._id);
+                        }}
+                      >
+                        ⋮
+                      </button>
+                      
+                      {openMenuId === note._id && (
+                        <div className="note-card-dropdown" onClick={(e) => e.stopPropagation()}>
+                          {note.type === 'text' && user?.quickNoteId !== note._id && (
+                            <button 
+                              className="dropdown-item" 
+                              onClick={(e) => handleSetQuickNote(e, note._id)}
+                            >
+                              ⚡ Set as Quick Note
+                            </button>
+                          )}
+                          <button 
+                            className="dropdown-item danger" 
+                            onClick={(e) => handleDeleteNote(e, note)}
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

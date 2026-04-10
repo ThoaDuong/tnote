@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import TiptapEditor, { type TiptapEditorHandle } from './TiptapEditor';
+import BlockNoteEditor from './BlockNoteEditor';
 import './App.css';
 
 declare const chrome: any;
@@ -25,7 +25,7 @@ function App() {
   const [textNotes, setTextNotes] = useState<Note[]>([]);
   const [pickerLoading, setPickerLoading] = useState(false);
 
-  const editorRef = useRef<TiptapEditorHandle>(null);
+
   const saveTimerRef = useRef<any>(null);
   const quickNoteIdRef = useRef<string | null>(null);
 
@@ -158,10 +158,28 @@ function App() {
 
   const handleSwitchNote = async (note: Note) => {
     if (!token) return;
-    setQuickNote(note);
-    quickNoteIdRef.current = note._id;
-    setShowPicker(false);
-    setSaveStatus('idle');
+    try {
+      setPickerLoading(true);
+      const res = await fetch(`${API_URL}/users/quick-note`, {
+        method: 'PATCH',
+        headers: authHeaders(token),
+        body: JSON.stringify({ noteId: note._id }),
+      });
+      
+      if (res.ok) {
+        const updatedUser = await res.json();
+        setUser(updatedUser);
+        setQuickNote(note);
+        quickNoteIdRef.current = note._id;
+        setShowPicker(false);
+        setSaveStatus('idle');
+      }
+    } catch (e) {
+      console.error('Failed to switch quick note:', e);
+      alert('Failed to update quick note setting.');
+    } finally {
+      setPickerLoading(false);
+    }
   };
 
   const openInWeb = () => {
@@ -250,9 +268,8 @@ function App() {
       {/* Editor */}
       <div className="editor-area">
         {quickNote ? (
-          <TiptapEditor
-            ref={editorRef}
-            initialHTML={quickNote.textContent ?? ''}
+          <BlockNoteEditor
+            initialContent={quickNote.textContent ?? ''}
             onChange={triggerSave}
           />
         ) : (

@@ -614,7 +614,7 @@ a {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
-  overflow: hidden;
+  /* overflow: hidden; Removed to allow dropdown to show outside */
   cursor: pointer;
   transition: all var(--transition-normal);
   display: flex;
@@ -633,7 +633,9 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: hidden; /* Kept here for rounded image/preview */
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
   position: relative;
 }
 
@@ -657,6 +659,7 @@ a {
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 6;
+  line-clamp: 6;
   -webkit-box-orient: vertical;
   text-align: left;
   width: 100%;
@@ -703,22 +706,76 @@ a {
   color: var(--accent-primary);
 }
 
-.note-card-delete {
-  opacity: 0;
-  padding: 4px 8px;
+.note-card-menu-trigger {
+  opacity: 1; /* Always show icon */
+  width: 28px;
+  height: 28px;
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
   color: var(--text-tertiary);
   transition: all var(--transition-fast);
+  cursor: pointer;
 }
 
-.note-card:hover .note-card-delete {
+.note-card:hover .note-card-menu-trigger {
   opacity: 1;
 }
 
-.note-card-delete:hover {
+.note-card-menu-trigger:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.note-card-menu-container {
+  position: relative;
+}
+
+.note-card-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000; /* Increased z-index */
+  min-width: 160px;
+  overflow: hidden;
+  animation: fadeInDown 0.15s ease-out;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  width: 100%;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.dropdown-item.danger {
   color: var(--accent-red);
-  background: rgba(232, 93, 93, 0.1);
+}
+
+.dropdown-item.danger:hover {
+  background: rgba(232, 93, 93, 0.08);
 }
 
 /* Empty state */
