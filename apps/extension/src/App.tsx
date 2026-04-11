@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import BlockNoteEditor from './BlockNoteEditor';
 import './App.css';
+import {
+  CheckIcon,
+  ArrowTopRightOnSquareIcon,
+  ArrowsRightLeftIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
 
 declare const chrome: any;
 
@@ -247,20 +253,20 @@ function App() {
 
         <div className="header-actions">
           {saveStatus === 'saving' && <span className="save-indicator saving">Saving…</span>}
-          {saveStatus === 'saved' && <span className="save-indicator saved">✓ Saved</span>}
+          {saveStatus === 'saved' && <span className="save-indicator saved"><CheckIcon style={{ width: 12, height: 12 }} /> Saved</span>}
           <button
             className="icon-btn"
             onClick={openInWeb}
             title="Open in TNote"
           >
-            ↗
+            <ArrowTopRightOnSquareIcon style={{ width: 16, height: 16 }} />
           </button>
           <button
             className="icon-btn change-btn"
             onClick={openPicker}
             title="Switch note"
           >
-            ⇄
+            <ArrowsRightLeftIcon style={{ width: 16, height: 16 }} />
           </button>
         </div>
       </div>
@@ -287,7 +293,7 @@ function App() {
           <div className="picker-modal" onClick={(e) => e.stopPropagation()}>
             <div className="picker-header">
               <span>Switch Note</span>
-              <button className="picker-close" onClick={() => setShowPicker(false)}>×</button>
+              <button className="picker-close" onClick={() => setShowPicker(false)}><XMarkIcon style={{ width: 16, height: 16 }} /></button>
             </div>
             <div className="picker-body">
               {pickerLoading ? (

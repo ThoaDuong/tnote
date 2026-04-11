@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User } from './user.schema';
 import { Note } from '../notes/note.schema';
 
@@ -66,15 +66,18 @@ export class UsersService {
   }
 
   async setQuickNote(userId: string, noteId: string): Promise<User> {
+    const userObjectId = new Types.ObjectId(userId);
+    const noteObjectId = new Types.ObjectId(noteId);
+
     // 1. Reset isQuickNote flag for all notes of this user
-    await this.noteModel.updateMany({ userId }, { isQuickNote: false }).exec();
+    await this.noteModel.updateMany({ userId: userObjectId }, { isQuickNote: false }).exec();
 
     // 2. Set isQuickNote=true for the new note
-    await this.noteModel.findByIdAndUpdate(noteId, { isQuickNote: true, isPinned: true }).exec();
+    await this.noteModel.findByIdAndUpdate(noteObjectId, { isQuickNote: true, isPinned: true }).exec();
 
     // 3. Update user's pointer
     const user = await this.userModel
-      .findByIdAndUpdate(userId, { quickNoteId: noteId }, { new: true })
+      .findByIdAndUpdate(userObjectId, { quickNoteId: noteObjectId }, { new: true })
       .exec();
     
     return user!;

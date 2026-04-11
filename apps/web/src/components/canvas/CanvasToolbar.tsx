@@ -1,6 +1,7 @@
 import type { ToolType } from '@note-app/shared';
 import { useCanvasStore } from '../../store/canvasStore';
 import { PEN_COLORS, HIGHLIGHT_COLORS, SHAPE_LIST } from './constants';
+import { ArrowUturnLeftIcon, ArrowUturnRightIcon } from '@heroicons/react/24/outline';
 
 interface CanvasToolbarProps {
   showSettings: string | null;
@@ -76,8 +77,8 @@ export default function CanvasToolbar({ showSettings, onShowSettings }: CanvasTo
         <div className="toolbar-divider" />
 
         {/* Undo / Redo */}
-        <button className="tool-btn" onClick={undo} title="Undo">↩</button>
-        <button className="tool-btn" onClick={redo} title="Redo">↪</button>
+        <button className="tool-btn" onClick={undo} title="Undo"><ArrowUturnLeftIcon style={{ width: 18, height: 18 }} /></button>
+        <button className="tool-btn" onClick={redo} title="Redo"><ArrowUturnRightIcon style={{ width: 18, height: 18 }} /></button>
       </div>
 
       {/* ─── Settings Popups ────────────────────────────────── */}

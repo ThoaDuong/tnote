@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useFolderStore } from '../store/folderStore';
 import { useNoteStore } from '../store/noteStore';
+import {
+  MagnifyingGlassIcon,
+  ClipboardDocumentListIcon,
+  PlusIcon,
+  XMarkIcon,
+  ArrowRightStartOnRectangleIcon,
+} from '@heroicons/react/24/outline';
 
 const FOLDER_COLORS = [
   '#D4763A', '#8B7EC8', '#4A90D9', '#3BAF7A',
@@ -52,7 +59,7 @@ export default function Sidebar() {
       {/* Search */}
       <div className="sidebar-search">
         <div className="search-wrapper">
-          <span className="search-icon">🔍</span>
+          <MagnifyingGlassIcon className="search-icon" style={{ width: 16, height: 16 }} />
           <input
             className="search-input"
             placeholder="Search notes..."
@@ -68,14 +75,14 @@ export default function Sidebar() {
         className={`all-notes-item ${activeFolderId === null ? 'active' : ''}`}
         onClick={() => handleFolderClick(null)}
       >
-        <span className="all-notes-icon">📋</span>
+        <ClipboardDocumentListIcon style={{ width: 18, height: 18, flexShrink: 0 }} />
         <span>All Notes</span>
       </div>
 
       {/* Folders Header */}
       <div className="sidebar-section-title">
         <span>Folders</span>
-        <button onClick={() => setShowNewFolder(true)} title="New folder">+</button>
+        <button onClick={() => setShowNewFolder(true)} title="New folder"><PlusIcon style={{ width: 16, height: 16 }} /></button>
       </div>
 
       {/* New folder input */}
@@ -127,7 +134,7 @@ export default function Sidebar() {
               style={{ opacity: 1, padding: '2px 6px', fontSize: 11 }}
               title="Delete folder"
             >
-              ✕
+              <XMarkIcon style={{ width: 14, height: 14 }} />
             </button>
           </div>
         ))}
@@ -148,7 +155,7 @@ export default function Sidebar() {
             <span className="user-email" style={{ fontSize: 11, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email || ''}</span>
           </div>
           <button className="logout-btn" onClick={logout} title="Logout">
-            ↪
+            <ArrowRightStartOnRectangleIcon style={{ width: 18, height: 18 }} />
           </button>
         </div>
       </div>

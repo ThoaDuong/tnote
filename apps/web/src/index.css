@@ -1461,3 +1461,54 @@ a {
     padding: var(--space-md);
   }
 }
+
+/* ================================ */
+/* TOOLTIP UI                       */
+/* ================================ */
+.tooltip-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.tooltip-content {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(5px);
+  background: rgba(45, 42, 38, 0.95);
+  color: var(--text-inverse);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-fast);
+  z-index: 1000;
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(4px);
+}
+
+/* Tooltip Arrow */
+.tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(45, 42, 38, 0.95) transparent transparent transparent;
+}
+
+/* Show Tooltip on Hover */
+.tooltip-container:hover .tooltip-content {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}

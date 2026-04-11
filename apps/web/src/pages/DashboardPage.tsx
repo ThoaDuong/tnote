@@ -6,6 +6,16 @@ import { useAuthStore } from '../store/authStore';
 import Sidebar from '../components/Sidebar';
 import { Alert } from '../components/Alert';
 import type { NoteType } from '@note-app/shared';
+import {
+  PlusIcon,
+  PencilSquareIcon,
+  DocumentTextIcon,
+  StarIcon,
+  TrashIcon,
+  EllipsisVerticalIcon,
+  XMarkIcon,
+  PencilIcon,
+} from '@heroicons/react/24/outline';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -91,7 +101,7 @@ export default function DashboardPage() {
             onClick={() => setShowNewNoteModal(true)}
             id="new-note-btn"
           >
-            <span>+</span>
+            <PlusIcon style={{ width: 16, height: 16 }} />
             New Note
           </button>
         </div>
@@ -103,7 +113,7 @@ export default function DashboardPage() {
           </div>
         ) : notes.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">📝</div>
+            <PencilSquareIcon style={{ width: 48, height: 48, opacity: 0.4, color: 'var(--text-tertiary)' }} />
             <div className="empty-title">No notes yet</div>
             <div className="empty-text">
               Create your first note to get started. Write text or draw with your Apple Pencil.
@@ -124,18 +134,18 @@ export default function DashboardPage() {
                     <div className="preview-text">{note.textContent}</div>
                   ) : (
                     <div className="preview-icon">
-                      {note.type === 'handwriting' ? '✏️' : '📄'}
+                      {note.type === 'handwriting' ? <PencilIcon style={{ width: 32, height: 32, color: 'var(--text-tertiary)', opacity: 0.5 }} /> : <DocumentTextIcon style={{ width: 32, height: 32, color: 'var(--text-tertiary)', opacity: 0.5 }} />}
                     </div>
                   )}
                 </div>
                 <div className="note-card-info">
                   <div className="note-card-title">
-                    {note.isQuickNote && <span style={{ fontSize: 11, color: '#8B7EC8', marginRight: 4 }}>⚡</span>}
+                    {note.isQuickNote && <StarIcon style={{ width: 14, height: 14, color: '#8B7EC8', marginRight: 4, flexShrink: 0 }} />}
                     {note.title}
                   </div>
                   <div className="note-card-meta">
                     <span className={`note-card-type ${note.type}`}>
-                      {note.type === 'handwriting' ? '✏️' : '📄'} {note.type}
+                      {note.type === 'handwriting' ? <PencilIcon style={{ width: 12, height: 12 }} /> : <DocumentTextIcon style={{ width: 12, height: 12 }} />} {note.type}
                     </span>
                     <span>{formatDate(note.updatedAt)}</span>
                     <div className="note-card-menu-container">
@@ -146,24 +156,24 @@ export default function DashboardPage() {
                           setOpenMenuId(openMenuId === note._id ? null : note._id);
                         }}
                       >
-                        ⋮
+                        <EllipsisVerticalIcon style={{ width: 16, height: 16 }} />
                       </button>
-                      
+
                       {openMenuId === note._id && (
                         <div className="note-card-dropdown" onClick={(e) => e.stopPropagation()}>
                           {note.type === 'text' && user?.quickNoteId !== note._id && (
-                            <button 
-                              className="dropdown-item" 
+                            <button
+                              className="dropdown-item"
                               onClick={(e) => handleSetQuickNote(e, note._id)}
                             >
-                              ⚡ Set as Quick Note
+                              <StarIcon style={{ width: 14, height: 14 }} /> Set as Quick Note
                             </button>
                           )}
-                          <button 
-                            className="dropdown-item danger" 
+                          <button
+                            className="dropdown-item danger"
                             onClick={(e) => handleDeleteNote(e, note)}
                           >
-                            🗑️ Delete
+                            <TrashIcon style={{ width: 14, height: 14 }} /> Delete
                           </button>
                         </div>
                       )}
@@ -182,7 +192,7 @@ export default function DashboardPage() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">Create New Note</h2>
-              <button className="modal-close" onClick={() => setShowNewNoteModal(false)}>×</button>
+              <button className="modal-close" onClick={() => setShowNewNoteModal(false)}><XMarkIcon style={{ width: 20, height: 20 }} /></button>
             </div>
             <div className="modal-body">
               <div className="form-group">
@@ -204,7 +214,7 @@ export default function DashboardPage() {
                     className={`note-type-option ${newNoteType === 'text' ? 'selected' : ''}`}
                     onClick={() => setNewNoteType('text')}
                   >
-                    <div className="note-type-icon">📄</div>
+                    <DocumentTextIcon style={{ width: 28, height: 28 }} />
                     <div className="note-type-label">Text</div>
                     <div className="note-type-desc">Type your notes</div>
                   </div>
@@ -212,7 +222,7 @@ export default function DashboardPage() {
                     className={`note-type-option ${newNoteType === 'handwriting' ? 'selected' : ''}`}
                     onClick={() => setNewNoteType('handwriting')}
                   >
-                    <div className="note-type-icon">✏️</div>
+                    <PencilIcon style={{ width: 28, height: 28 }} />
                     <div className="note-type-label">Handwriting</div>
                     <div className="note-type-desc">Draw with Apple Pencil</div>
                   </div>
