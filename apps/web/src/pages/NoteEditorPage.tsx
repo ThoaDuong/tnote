@@ -6,6 +6,7 @@ import { useCanvasStore } from '../store/canvasStore';
 import { notesApi } from '../services/api';
 import HandwritingCanvas from '../components/HandwritingCanvas';
 import TextEditor from '../components/TextEditor';
+import { Alert } from '../components/Alert';
 import type { INote, IStroke, NoteType } from '@note-app/shared';
 
 export default function NoteEditorPage() {
@@ -233,7 +234,7 @@ export default function NoteEditorPage() {
                       }}
                       onClick={() => {
                         navigator.clipboard.writeText(`${window.location.origin}/share/${noteIdRef.current}`);
-                        alert('Link copied to clipboard!');
+                        Alert.successToast('Link copied to clipboard!');
                       }}
                     >
                       Copy
@@ -268,7 +269,7 @@ export default function NoteEditorPage() {
                       } else {
                         await updateQuickNote(noteIdRef.current);
                       }
-                      alert('This note is now your Quick Note!');
+                      Alert.successToast('This note is now your Quick Note!');
                     }}
                     disabled={user?.quickNoteId === noteIdRef.current}
                   >

@@ -4,6 +4,7 @@ import { useFolderStore } from '../store/folderStore';
 import { useNoteStore } from '../store/noteStore';
 import { useAuthStore } from '../store/authStore';
 import Sidebar from '../components/Sidebar';
+import { Alert } from '../components/Alert';
 import type { NoteType } from '@note-app/shared';
 
 export default function DashboardPage() {
@@ -48,8 +49,9 @@ export default function DashboardPage() {
     e.stopPropagation();
     setOpenMenuId(null);
     if (note.isQuickNote) {
-      alert(
-        'This note is your Quick Note and cannot be deleted.\n\nTo delete it, first change your Quick Note to another text note.'
+      Alert.error(
+        'Cannot delete Quick Note',
+        'To delete it, first change your Quick Note to another text note.'
       );
       return;
     }
@@ -63,9 +65,9 @@ export default function DashboardPage() {
     setOpenMenuId(null);
     try {
       await updateQuickNote(noteId);
-      alert('Quick Note updated!');
+      Alert.successToast('Quick Note updated!');
     } catch (err) {
-      alert('Failed to update Quick Note.');
+      Alert.error('Failed to update Quick Note.');
     }
   };
 

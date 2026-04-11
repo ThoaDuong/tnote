@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Note } from './note.schema';
@@ -121,8 +121,14 @@ export class NotesService {
   }
 
   async delete(id: string, userId: string): Promise<void> {
-    const result = await this.noteModel.deleteOne({ _id: id, userId }).exec();
-    if (result.deletedCount === 0) throw new NotFoundException('Note not found');
+    const note = await this.noteModel.findOne({ _id: id, userId }).exec();
+    if (!note) throw new NotFoundException('Note not found');
+
+    if (note.isQuickNote) {
+      throw new BadRequestException('This note is your Quick Note and cannot be deleted.');
+    }
+
+    await this.noteModel.deleteOne({ _id: id, userId }).exec();
   }
 
   async deleteByFolder(folderId: string, userId: string): Promise<void> {
