@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { IUser } from '@note-app/shared';
 import { authApi, usersApi } from '../services/api';
+import { useNoteStore } from './noteStore';
 
 interface AuthState {
   user: IUser | null;
@@ -57,6 +58,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const user = await usersApi.setQuickNote(noteId);
       set({ user });
+      useNoteStore.getState().setQuickNoteLocally(noteId);
     } catch (err) {
       console.error('Failed to update quick note:', err);
       throw err;
