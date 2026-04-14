@@ -9,7 +9,6 @@ import {
   Query,
   Req,
   UseGuards,
-  NotFoundException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/auth.guards';
 import { NotesService } from './notes.service';
@@ -22,11 +21,7 @@ export class NotesController {
 
   @Get('quick')
   async getQuickNote(@Req() req: any) {
-    const note = await this.notesService.findOrAssignQuickNote(req.user._id.toString());
-    if (!note) {
-      throw new NotFoundException('No quick note found. Login at TNote web to create one.');
-    }
-    return note;
+    return this.notesService.findQuickNote(req.user._id.toString());
   }
 
   @Get()

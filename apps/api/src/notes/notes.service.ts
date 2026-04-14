@@ -54,58 +54,32 @@ export class NotesService {
     return note;
   }
 
-  async findQuickNote(userId: string, quickNoteId: string): Promise<Note> {
-    const note = await this.noteModel.findOne({ _id: quickNoteId, userId }).exec();
-    if (!note) throw new NotFoundException('Quick note not found');
-    return note;
-  }
-
   /**
-   * Find the user's quick note. If quickNoteId is not set but a note with
-   * isQuickNote=true exists, auto-assign it and clean up duplicates.
+   * Find the user's quick note.
+   * Primary: find note with isQuickNote=true (source of truth).
+   * Fallback: use user.quickNoteId if flag not found.
+   * Each account has exactly 1 quick note at any time.
    */
-  async findOrAssignQuickNote(userId: string): Promise<Note | null> {
-    const user = await this.userModel.findById(userId).exec();
-    if (!user) return null;
-
-    // If user already has quickNoteId set, return that note
-    if (user.quickNoteId) {
-      const note = await this.noteModel.findOne({ _id: user.quickNoteId, userId }).exec();
-      if (note) return note;
-      // quickNoteId points to a deleted note — fall through to auto-detect
-    }
-
-    // Auto-detect: find notes with isQuickNote=true for this user
-    const quickNotes = await this.noteModel
-      .find({ userId, isQuickNote: true })
-      .sort({ createdAt: 1 })
-      .exec();
-
-    let keepNote;
-
-    if (quickNotes.length === 0) {
-      // Create a default quick note if none exists
-      keepNote = await this.noteModel.create({
-        title: 'Quick Note',
-        type: 'text',
-        textContent: '',
-        userId,
-        isQuickNote: true,
-        isPinned: true,
-      });
-    } else {
-      // Keep the oldest, delete duplicates
-      keepNote = quickNotes[0];
-      if (quickNotes.length > 1) {
-        const deleteIds = quickNotes.slice(1).map(n => n._id);
-        await this.noteModel.deleteMany({ _id: { $in: deleteIds } }).exec();
+  async findQuickNote(userId: string): Promise<Note> {
+    // Primary: find by isQuickNote flag on note
+    const note = await this.noteModel.findOne({ userId, isQuickNote: true }).exec();
+    if (note) {
+      // Sync quickNoteId on user if out of date
+      const user = await this.userModel.findById(userId).exec();
+      if (user && (!user.quickNoteId || user.quickNoteId.toString() !== note._id.toString())) {
+        await this.userModel.findByIdAndUpdate(userId, { quickNoteId: note._id }).exec();
       }
+      return note;
     }
 
-    // Assign to user
-    await this.userModel.findByIdAndUpdate(userId, { quickNoteId: keepNote._id }).exec();
+    // Fallback: lookup by user.quickNoteId
+    const user = await this.userModel.findById(userId).exec();
+    if (user?.quickNoteId) {
+      const fallbackNote = await this.noteModel.findOne({ _id: user.quickNoteId, userId }).exec();
+      if (fallbackNote) return fallbackNote;
+    }
 
-    return keepNote;
+    throw new NotFoundException('Quick note not found');
   }
 
   async create(userId: string, data: any): Promise<Note> {
@@ -133,24 +107,5 @@ export class NotesService {
 
   async deleteByFolder(folderId: string, userId: string): Promise<void> {
     await this.noteModel.deleteMany({ folderId, userId }).exec();
-  }
-
-  async cleanupDuplicateQuickNotes(userId: string): Promise<{ kept: string; deleted: number }> {
-    const quickNotes = await this.noteModel
-      .find({ userId, isQuickNote: true })
-      .sort({ createdAt: 1 })
-      .exec();
-
-    if (quickNotes.length <= 1) {
-      return { kept: quickNotes[0]?._id?.toString() || 'none', deleted: 0 };
-    }
-
-    // Keep the first (oldest), delete the rest
-    const keepId = quickNotes[0]._id;
-    const deleteIds = quickNotes.slice(1).map(n => n._id);
-
-    const result = await this.noteModel.deleteMany({ _id: { $in: deleteIds } }).exec();
-
-    return { kept: keepId.toString(), deleted: result.deletedCount };
   }
 }

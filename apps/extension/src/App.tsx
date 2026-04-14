@@ -175,8 +175,20 @@ function App() {
       if (res.ok) {
         const updatedUser = await res.json();
         setUser(updatedUser);
-        setQuickNote(note);
-        quickNoteIdRef.current = note._id;
+
+        // Fetch full note with textContent (picker list may not have it)
+        const noteRes = await fetch(`${API_URL}/notes/${note._id}`, {
+          headers: authHeaders(token),
+        });
+        if (noteRes.ok) {
+          const fullNote = await noteRes.json();
+          setQuickNote(fullNote);
+          quickNoteIdRef.current = fullNote._id;
+        } else {
+          setQuickNote(note);
+          quickNoteIdRef.current = note._id;
+        }
+
         setShowPicker(false);
         setSaveStatus('idle');
       }
@@ -275,6 +287,7 @@ function App() {
       <div className="editor-area">
         {quickNote ? (
           <BlockNoteEditor
+            key={quickNote._id}
             initialContent={quickNote.textContent ?? ''}
             onChange={triggerSave}
           />
