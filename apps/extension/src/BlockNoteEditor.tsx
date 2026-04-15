@@ -15,15 +15,20 @@ export default function BlockNoteEditor({ initialContent, onChange }: BlockNoteE
 
   // Parse initial content — supports BlockNote JSON
   const parsedContent = useMemo(() => {
+    console.log('[DEBUG] BlockNoteEditor initialContent:', {
+      length: initialContent?.length ?? 0,
+      preview: initialContent?.substring(0, 200),
+      isEmpty: !initialContent,
+    });
     if (!initialContent) return undefined;
     try {
       const data = JSON.parse(initialContent);
       if (Array.isArray(data) && data.length > 0) {
-        if (typeof data[0].content === 'string') return undefined; // old incompatible format
+        console.log('[DEBUG] Parsed as BlockNote JSON, blocks:', data.length);
         return data as PartialBlock[];
       }
     } catch {
-      // Not JSON — could be HTML from old Tiptap extension
+      console.log('[DEBUG] Not JSON, checking if HTML...');
     }
     return undefined;
   }, [initialContent]);

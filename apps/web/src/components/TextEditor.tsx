@@ -21,7 +21,6 @@ export default function TextEditor({ initialContent, onChange, readOnly = false 
     try {
       const data = JSON.parse(initialContent);
       if (Array.isArray(data) && data.length > 0) {
-        if (typeof data[0].content === 'string') return undefined; // old incompatible format
         return data as PartialBlock[];
       }
     } catch {

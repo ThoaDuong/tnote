@@ -4,8 +4,7 @@ import './App.css';
 import {
   CheckIcon,
   ArrowTopRightOnSquareIcon,
-  ArrowsRightLeftIcon,
-  XMarkIcon,
+  ArrowLeftIcon,
 } from '@heroicons/react/24/outline';
 
 declare const chrome: any;
@@ -24,16 +23,14 @@ const API_URL = 'http://localhost:3000';
 function App() {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [quickNote, setQuickNote] = useState<Note | null>(null);
+  const [activeNote, setActiveNote] = useState<Note | null>(null);
   const [user, setUser] = useState<{ displayName: string; email: string; avatar: string } | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const [showPicker, setShowPicker] = useState(false);
   const [textNotes, setTextNotes] = useState<Note[]>([]);
-  const [pickerLoading, setPickerLoading] = useState(false);
-
+  const [listLoading, setListLoading] = useState(false);
 
   const saveTimerRef = useRef<any>(null);
-  const quickNoteIdRef = useRef<string | null>(null);
+  const activeNoteIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -72,39 +69,41 @@ function App() {
   const fetchUserAndNote = async (tkn: string) => {
     try {
       // Fetch user profile
-      const userRes = await fetch(`${API_URL}/auth/me`, {
+      const userRes = await fetch(`${API_URL}/auth/me?_t=${Date.now()}`, {
         headers: authHeaders(tkn),
+        cache: 'no-store'
       });
       if (userRes.ok) {
         const userData = await userRes.json();
         setUser(userData);
       }
       
-      // Fetch quick note
-      await fetchQuickNote(tkn);
+      // Fetch list of text notes initially
+      await fetchTextNotes(tkn);
     } catch (e) {
       console.error('Failed to fetch user data', e);
       setLoading(false);
     }
   };
 
-  const fetchQuickNote = async (tkn: string) => {
+  const fetchTextNotes = async (tkn: string) => {
     try {
-      const res = await fetch(`${API_URL}/notes/quick`, {
+      setListLoading(true);
+      const res = await fetch(`${API_URL}/notes?type=text&_t=${Date.now()}`, {
         headers: authHeaders(tkn),
+        cache: 'no-store'
       });
+      console.log('[DEBUG] GET /notes status:', res.status);
       if (res.ok) {
-        const note = await res.json();
-        setQuickNote(note);
-        quickNoteIdRef.current = note._id;
+        const notes = await res.json();
+        setTextNotes(notes);
       } else if (res.status === 401 || res.status === 403) {
-        // Token expired or invalid — force re-login
         setToken(null);
       }
-      // 404 = no quick note set yet — user sees "No quick note found" UI
     } catch (e) {
-      console.error('Failed to fetch quick note', e);
+      console.error('Failed to fetch text notes', e);
     } finally {
+      setListLoading(false);
       setLoading(false);
     }
   };
@@ -120,13 +119,13 @@ function App() {
 
   // Debounced auto-save
   const triggerSave = useCallback((html: string) => {
-    if (!quickNoteIdRef.current || !token) return;
+    if (!activeNoteIdRef.current || !token) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
 
     saveTimerRef.current = setTimeout(async () => {
       setSaveStatus('saving');
       try {
-        const res = await fetch(`${API_URL}/notes/${quickNoteIdRef.current}`, {
+        const res = await fetch(`${API_URL}/notes/${activeNoteIdRef.current}`, {
           method: 'PATCH',
           headers: authHeaders(token),
           body: JSON.stringify({ textContent: html }),
@@ -143,66 +142,34 @@ function App() {
     }, 1000);
   }, [token]);
 
-  const openPicker = async () => {
-    if (!token) return;
-    setPickerLoading(true);
-    setShowPicker(true);
-    try {
-      const res = await fetch(`${API_URL}/notes?type=text`, {
-        headers: authHeaders(token),
-      });
-      if (res.ok) {
-        const notes = await res.json();
-        setTextNotes(notes);
-      }
-    } catch (e) {
-      console.error('Failed to fetch notes', e);
-    } finally {
-      setPickerLoading(false);
-    }
-  };
-
-  const handleSwitchNote = async (note: Note) => {
+  const handleOpenNote = async (note: Note) => {
     if (!token) return;
     try {
-      setPickerLoading(true);
-      const res = await fetch(`${API_URL}/users/quick-note`, {
-        method: 'PATCH',
+      setLoading(true);
+      // Fetch full note with textContent since the list might not contain it
+      const noteRes = await fetch(`${API_URL}/notes/${note._id}?_t=${Date.now()}`, {
         headers: authHeaders(token),
-        body: JSON.stringify({ noteId: note._id }),
+        cache: 'no-store'
       });
-      
-      if (res.ok) {
-        const updatedUser = await res.json();
-        setUser(updatedUser);
-
-        // Fetch full note with textContent (picker list may not have it)
-        const noteRes = await fetch(`${API_URL}/notes/${note._id}`, {
-          headers: authHeaders(token),
-        });
-        if (noteRes.ok) {
-          const fullNote = await noteRes.json();
-          setQuickNote(fullNote);
-          quickNoteIdRef.current = fullNote._id;
-        } else {
-          setQuickNote(note);
-          quickNoteIdRef.current = note._id;
-        }
-
-        setShowPicker(false);
-        setSaveStatus('idle');
+      if (noteRes.ok) {
+        const fullNote = await noteRes.json();
+        setActiveNote(fullNote);
+        activeNoteIdRef.current = fullNote._id;
+      } else {
+        setActiveNote(note);
+        activeNoteIdRef.current = note._id;
       }
+      setSaveStatus('idle');
     } catch (e) {
-      console.error('Failed to switch quick note:', e);
-      alert('Failed to update quick note setting.');
+      console.error('Failed to open note:', e);
     } finally {
-      setPickerLoading(false);
+      setLoading(false);
     }
   };
 
   const openInWeb = () => {
-    if (!quickNoteIdRef.current) return;
-    const url = `${WEB_URL}/editor/${quickNoteIdRef.current}`;
+    if (!activeNoteIdRef.current) return;
+    const url = `${WEB_URL}/editor/${activeNoteIdRef.current}`;
     if (typeof chrome !== 'undefined' && chrome.tabs) {
       chrome.tabs.create({ url });
     } else {
@@ -244,10 +211,21 @@ function App() {
     <div className="app-container">
       {/* Header */}
       <div className="header">
-        <img src="/tnote.png" alt="TNote" className="header-logo" />
-        <span className="header-title">{quickNote?.title || 'Quick Note'}</span>
+        {activeNote ? (
+          <button 
+            className="icon-btn" 
+            onClick={() => { setActiveNote(null); activeNoteIdRef.current = null; }}
+            style={{ marginRight: 4 }}
+            title="Back to List"
+          >
+            <ArrowLeftIcon style={{ width: 18, height: 18 }} />
+          </button>
+        ) : (
+          <img src="/tnote.png" alt="TNote" className="header-logo" />
+        )}
+        <span className="header-title">{activeNote ? activeNote.title : 'My Notes'}</span>
         
-        {user && (
+        {!activeNote && user && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '4px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.2 }}>{user.displayName}</span>
@@ -264,75 +242,55 @@ function App() {
         )}
 
         <div className="header-actions">
-          {saveStatus === 'saving' && <span className="save-indicator saving">Saving…</span>}
-          {saveStatus === 'saved' && <span className="save-indicator saved"><CheckIcon style={{ width: 12, height: 12 }} /> Saved</span>}
-          <button
-            className="icon-btn"
-            onClick={openInWeb}
-            title="Open in TNote"
-          >
-            <ArrowTopRightOnSquareIcon style={{ width: 16, height: 16 }} />
-          </button>
-          <button
-            className="icon-btn change-btn"
-            onClick={openPicker}
-            title="Switch note"
-          >
-            <ArrowsRightLeftIcon style={{ width: 16, height: 16 }} />
-          </button>
+          {activeNote && (
+            <>
+              {saveStatus === 'saving' && <span className="save-indicator saving">Saving…</span>}
+              {saveStatus === 'saved' && <span className="save-indicator saved"><CheckIcon style={{ width: 12, height: 12 }} /> Saved</span>}
+              <button
+                className="icon-btn"
+                onClick={openInWeb}
+                title="Open in TNote"
+              >
+                <ArrowTopRightOnSquareIcon style={{ width: 16, height: 16 }} />
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Editor */}
-      <div className="editor-area">
-        {quickNote ? (
-          <BlockNoteEditor
-            key={quickNote._id}
-            initialContent={quickNote.textContent ?? ''}
-            onChange={triggerSave}
-          />
+      {/* Main Body */}
+      <div className="main-area">
+        {activeNote ? (
+          <div className="editor-area">
+            <BlockNoteEditor
+              key={activeNote._id}
+              initialContent={activeNote.textContent ?? ''}
+              onChange={triggerSave}
+            />
+          </div>
         ) : (
-          <div className="no-quick-note">
-            <p>No quick note found.</p>
-            <p style={{ fontSize: 12, color: '#9CA3AF' }}>Login at TNote web to create your quick note.</p>
-            <button className="primary-btn" onClick={handleLogin}>Open TNote</button>
+          <div className="list-area">
+            {listLoading ? (
+               <div className="loading-container"><div className="spinner-ring small" /></div>
+            ) : textNotes.length === 0 ? (
+               <div className="empty-state">
+                 <p>No notes available.</p>
+                 <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>Create a text note on TNote web.</p>
+                 <button className="primary-btn" style={{ marginTop: 12 }} onClick={handleLogin}>Open TNote</button>
+               </div>
+            ) : (
+               <ul className="note-list">
+                 {textNotes.map((note) => (
+                   <li key={note._id} className="note-list-item" onClick={() => handleOpenNote(note)}>
+                     <span className="note-item-title">{note.title}</span>
+                     <span className="note-item-arrow">›</span>
+                   </li>
+                 ))}
+               </ul>
+            )}
           </div>
         )}
       </div>
-
-      {/* Note Picker Modal */}
-      {showPicker && (
-        <div className="picker-overlay" onClick={() => setShowPicker(false)}>
-          <div className="picker-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="picker-header">
-              <span>Switch Note</span>
-              <button className="picker-close" onClick={() => setShowPicker(false)}><XMarkIcon style={{ width: 16, height: 16 }} /></button>
-            </div>
-            <div className="picker-body">
-              {pickerLoading ? (
-                <div className="picker-loading"><div className="spinner-ring small" /></div>
-              ) : textNotes.length === 0 ? (
-                <p className="picker-empty">No text notes available.</p>
-              ) : (
-                <ul className="picker-list">
-                  {textNotes.map((note) => (
-                    <li
-                      key={note._id}
-                      className={`picker-item ${note._id === quickNoteIdRef.current ? 'current' : ''}`}
-                      onClick={() => handleSwitchNote(note)}
-                    >
-                      <span className="picker-item-title">{note.title}</span>
-                      {note._id === quickNoteIdRef.current && (
-                        <span className="picker-current-badge">current</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
