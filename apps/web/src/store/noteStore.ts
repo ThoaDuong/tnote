@@ -11,7 +11,6 @@ interface NoteState {
   createNote: (data: CreateNoteDto) => Promise<INote>;
   updateNote: (id: string, data: UpdateNoteDto) => Promise<INote>;
   deleteNote: (id: string) => Promise<void>;
-  setQuickNoteLocally: (noteId: string) => void;
 }
 
 export const useNoteStore = create<NoteState>((set, get) => ({
@@ -52,14 +51,5 @@ export const useNoteStore = create<NoteState>((set, get) => ({
   deleteNote: async (id) => {
     await notesApi.delete(id);
     set((s) => ({ notes: s.notes.filter((n) => n._id !== id) }));
-  },
-
-  setQuickNoteLocally: (noteId) => {
-    set((s) => ({
-      notes: s.notes.map((n) => ({
-        ...n,
-        isQuickNote: n._id === noteId,
-      })),
-    }));
   },
 }));

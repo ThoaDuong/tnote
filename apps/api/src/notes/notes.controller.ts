@@ -19,11 +19,6 @@ import { NoteType } from '@note-app/shared';
 export class NotesController {
   constructor(private notesService: NotesService) {}
 
-  @Get('quick')
-  async getQuickNote(@Req() req: any) {
-    return this.notesService.findQuickNote(req.user._id.toString());
-  }
-
   @Get()
   findAll(
     @Req() req: any,

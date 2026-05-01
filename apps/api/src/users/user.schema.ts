@@ -14,9 +14,6 @@ export class User extends Document {
 
   @Prop()
   avatar: string;
-
-  @Prop({ type: Types.ObjectId, ref: 'Note' })
-  quickNoteId: Types.ObjectId;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

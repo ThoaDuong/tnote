@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useNoteStore } from '../store/noteStore';
-import { useAuthStore } from '../store/authStore';
 import { useCanvasStore } from '../store/canvasStore';
 import { notesApi } from '../services/api';
 import HandwritingCanvas from '../components/HandwritingCanvas';
@@ -13,14 +12,12 @@ import {
   LockClosedIcon,
   GlobeAltIcon,
   CheckIcon,
-  StarIcon,
 } from '@heroicons/react/24/outline';
 
 export default function NoteEditorPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const { user, updateQuickNote } = useAuthStore();
   const { createNote, updateNote } = useNoteStore();
   const { loadStrokes, clearAll } = useCanvasStore();
 
@@ -259,50 +256,6 @@ export default function NoteEditorPage() {
                       Copy
                     </button>
                   </div>
-                </div>
-              )}
-
-              {noteType === 'text' && (
-                <div style={{ marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '16px' }}>
-                  <button
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      backgroundColor: user?.quickNoteId === noteId ? '#8B7EC8' : '#f1f1f1',
-                      color: user?.quickNoteId === noteId ? '#fff' : '#333',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      cursor: user?.quickNoteId === noteId ? 'default' : 'pointer',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }}
-                    onClick={async () => {
-                      if (user?.quickNoteId === noteId) return;
-                      if (!noteIdRef.current) {
-                        const newId = await ensureNoteCreated();
-                        await updateQuickNote(newId);
-                      } else {
-                        await updateQuickNote(noteIdRef.current);
-                      }
-                      Alert.successToast('This note is now your Quick Note!');
-                    }}
-                    disabled={user?.quickNoteId === noteId}
-                  >
-                    <div className="tooltip-container">
-                      <StarIcon style={{ width: 14, height: 14, color: '#F5B731', marginRight: 4 }} />
-                      <div className="tooltip-content">
-                        Đây là Quick Note mặc định sẽ được đồng bộ lên Extension
-                      </div>
-                    </div>
-                    {user?.quickNoteId === noteId ? 'Current Quick Note' : 'Set as Quick Note'}
-                  </button>
-                  <p style={{ fontSize: '11px', color: '#666', marginTop: '6px', textAlign: 'center' }}>
-                    Quick Notes can be accessed instantly from the TNote Chrome Extension.
-                  </p>
                 </div>
               )}
             </div>

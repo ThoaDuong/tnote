@@ -82,9 +82,6 @@ export class Note extends Document {
   isPublic: boolean;
 
   @Prop({ default: false })
-  isQuickNote: boolean;
-
-  @Prop({ default: false })
   isPinned: boolean;
 }
 

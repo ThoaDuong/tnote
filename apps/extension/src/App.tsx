@@ -14,7 +14,6 @@ interface Note {
   title: string;
   type: 'text' | 'handwriting';
   textContent?: string;
-  isQuickNote?: boolean;
 }
 
 const WEB_URL = 'http://localhost:5173';

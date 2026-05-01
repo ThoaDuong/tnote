@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFolderStore } from '../store/folderStore';
 import { useNoteStore } from '../store/noteStore';
-import { useAuthStore } from '../store/authStore';
 import Sidebar from '../components/Sidebar';
 import { Alert } from '../components/Alert';
 import type { NoteType } from '@note-app/shared';
@@ -10,7 +9,6 @@ import {
   PlusIcon,
   PencilSquareIcon,
   DocumentTextIcon,
-  StarIcon,
   TrashIcon,
   EllipsisVerticalIcon,
   XMarkIcon,
@@ -21,7 +19,6 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { folders, activeFolderId, fetchFolders } = useFolderStore();
   const { notes, isLoading, fetchNotes, deleteNote } = useNoteStore();
-  const { user, updateQuickNote } = useAuthStore();
   const [showNewNoteModal, setShowNewNoteModal] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState('');
   const [newNoteType, setNewNoteType] = useState<NoteType>('text');
@@ -55,30 +52,12 @@ export default function DashboardPage() {
     setNewNoteTitle('');
   };
 
-  const handleDeleteNote = async (e: React.MouseEvent, note: { _id: string; isQuickNote?: boolean }) => {
+  const handleDeleteNote = async (e: React.MouseEvent, noteId: string) => {
     e.stopPropagation();
     setOpenMenuId(null);
-    if (note.isQuickNote) {
-      Alert.error(
-        'Cannot delete Quick Note',
-        'To delete it, first change your Quick Note to another text note.'
-      );
-      return;
-    }
     const confirmed = await Alert.confirm('Delete this note?', 'This action cannot be undone.', 'Delete');
     if (confirmed) {
-      await deleteNote(note._id);
-    }
-  };
-
-  const handleSetQuickNote = async (e: React.MouseEvent, noteId: string) => {
-    e.stopPropagation();
-    setOpenMenuId(null);
-    try {
-      await updateQuickNote(noteId);
-      Alert.successToast('Quick Note updated!');
-    } catch {
-      Alert.error('Failed to update Quick Note.');
+      await deleteNote(noteId);
     }
   };
 
@@ -141,7 +120,6 @@ export default function DashboardPage() {
                 </div>
                 <div className="note-card-info">
                   <div className="note-card-title">
-                    {note.isQuickNote && <StarIcon style={{ width: 14, height: 14, color: '#8B7EC8', marginRight: 4, flexShrink: 0 }} />}
                     {note.title}
                   </div>
                   <div className="note-card-meta">
@@ -162,17 +140,9 @@ export default function DashboardPage() {
 
                       {openMenuId === note._id && (
                         <div className="note-card-dropdown" onClick={(e) => e.stopPropagation()}>
-                          {note.type === 'text' && user?.quickNoteId !== note._id && (
-                            <button
-                              className="dropdown-item"
-                              onClick={(e) => handleSetQuickNote(e, note._id)}
-                            >
-                              <StarIcon style={{ width: 14, height: 14 }} /> Set as Quick Note
-                            </button>
-                          )}
                           <button
                             className="dropdown-item danger"
-                            onClick={(e) => handleDeleteNote(e, note)}
+                            onClick={(e) => handleDeleteNote(e, note._id)}
                           >
                             <TrashIcon style={{ width: 14, height: 14 }} /> Delete
                           </button>

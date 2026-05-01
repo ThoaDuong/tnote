@@ -23,6 +23,7 @@ export default function Sidebar() {
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderColor, setNewFolderColor] = useState(FOLDER_COLORS[0]);
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleSearch = (q: string) => {
     setSearchQuery(q);
@@ -34,11 +35,21 @@ export default function Sidebar() {
     fetchNotes(folderId);
   };
 
+  const isDuplicateName = folders.some(
+    (f) => f.name.toLowerCase() === newFolderName.trim().toLowerCase(),
+  );
+  const isFolderNameInvalid = !newFolderName.trim() || isDuplicateName;
+
   const handleCreateFolder = async () => {
-    if (!newFolderName.trim()) return;
-    await createFolder(newFolderName.trim(), newFolderColor);
-    setNewFolderName('');
-    setShowNewFolder(false);
+    if (isFolderNameInvalid || isCreating) return;
+    setIsCreating(true);
+    try {
+      await createFolder(newFolderName.trim(), newFolderColor);
+      setNewFolderName('');
+      setShowNewFolder(false);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleDeleteFolder = async (e: React.MouseEvent, folderId: string) => {
@@ -99,10 +110,15 @@ export default function Sidebar() {
             placeholder="Folder name..."
             value={newFolderName}
             onChange={(e) => setNewFolderName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreateFolder()}
+            onKeyDown={(e) => e.key === 'Enter' && !isFolderNameInvalid && handleCreateFolder()}
             autoFocus
-            style={{ marginBottom: 8, fontSize: 13 }}
+            style={{ marginBottom: isDuplicateName ? 4 : 8, fontSize: 13 }}
           />
+          {isDuplicateName && (
+            <div style={{ color: '#E85D5D', fontSize: 11, marginBottom: 6, paddingLeft: 2 }}>
+              Folder name already exists
+            </div>
+          )}
           <div className="color-picker" style={{ marginBottom: 8 }}>
             {FOLDER_COLORS.map((c) => (
               <div
@@ -114,8 +130,13 @@ export default function Sidebar() {
             ))}
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button className="btn-primary" onClick={handleCreateFolder} style={{ flex: 1, padding: '6px 12px', fontSize: 12 }}>
-              Create
+            <button
+              className="btn-primary"
+              onClick={handleCreateFolder}
+              disabled={isFolderNameInvalid || isCreating}
+              style={{ flex: 1, padding: '6px 12px', fontSize: 12, opacity: isFolderNameInvalid || isCreating ? 0.5 : 1, cursor: isFolderNameInvalid || isCreating ? 'not-allowed' : 'pointer' }}
+            >
+              {isCreating ? 'Creating...' : 'Create'}
             </button>
             <button className="btn-secondary" onClick={() => setShowNewFolder(false)} style={{ padding: '6px 12px', fontSize: 12 }}>
               Cancel
