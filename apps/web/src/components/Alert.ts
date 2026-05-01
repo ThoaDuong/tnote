@@ -54,5 +54,33 @@ export const Alert = {
         htmlContainer: 'custom-swal-content',
       },
     });
-  }
+  },
+
+  // Confirm dialog (replaces native confirm())
+  confirm: async (
+    title: string,
+    text?: string,
+    confirmText = 'Confirm',
+    cancelText = 'Cancel',
+  ): Promise<boolean> => {
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: title,
+      text: text,
+      showCancelButton: true,
+      confirmButtonColor: '#E85D5D',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: confirmText,
+      cancelButtonText: cancelText,
+      heightAuto: false,
+      scrollbarPadding: false,
+      customClass: {
+        popup: 'custom-swal-popup',
+        icon: 'custom-swal-icon',
+        title: 'custom-swal-title',
+        htmlContainer: 'custom-swal-content',
+      },
+    });
+    return result.isConfirmed;
+  },
 };

@@ -7,7 +7,7 @@ import { notesApi } from '../services/api';
 import HandwritingCanvas from '../components/HandwritingCanvas';
 import TextEditor from '../components/TextEditor';
 import { Alert } from '../components/Alert';
-import type { INote, IStroke, NoteType } from '@note-app/shared';
+import type { INote, IStroke, NoteType, UpdateNoteDto } from '@note-app/shared';
 import {
   ArrowLeftIcon,
   LockClosedIcon,
@@ -32,8 +32,9 @@ export default function NoteEditorPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [noteId, setNoteId] = useState<string | null>(null);
 
-  const saveTimerRef = useRef<any>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noteIdRef = useRef<string | null>(null);
   const latestStrokesRef = useRef<IStroke[]>([]);
 
@@ -42,34 +43,44 @@ export default function NoteEditorPage() {
 
   // Load existing note
   useEffect(() => {
-    if (isNew) {
-      setTitle(searchParams.get('title') || 'Untitled');
-      setNoteType((searchParams.get('type') as NoteType) || 'text');
-      clearAll();
-    } else if (id) {
-      setIsLoading(true);
-      notesApi.getById(id).then((data) => {
-        setNote(data);
-        setTitle(data.title);
-        setNoteType(data.type as NoteType);
-        setTextContent(data.textContent || '');
-        setIsPublic(data.isPublic || false);
-        noteIdRef.current = data._id;
-        if (data.strokes) {
-          loadStrokes(data.strokes);
-          latestStrokesRef.current = data.strokes;
+    let cancelled = false;
+
+    const init = async () => {
+      if (isNew) {
+        setTitle(searchParams.get('title') || 'Untitled');
+        setNoteType((searchParams.get('type') as NoteType) || 'text');
+        clearAll();
+      } else if (id) {
+        setIsLoading(true);
+        try {
+          const data = await notesApi.getById(id);
+          if (cancelled) return;
+          setNote(data);
+          setTitle(data.title);
+          setNoteType(data.type as NoteType);
+          setTextContent(data.textContent || '');
+          setIsPublic(data.isPublic || false);
+          noteIdRef.current = data._id;
+          setNoteId(data._id);
+          if (data.strokes) {
+            loadStrokes(data.strokes);
+            latestStrokesRef.current = data.strokes;
+          }
+          setIsLoading(false);
+        } catch {
+          if (!cancelled) navigate('/');
         }
-        setIsLoading(false);
-      }).catch(() => {
-        navigate('/');
-      });
-    }
+      }
+    };
+
+    init();
 
     return () => {
+      cancelled = true;
       clearAll();
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [id]);
+  }, [id, isNew, searchParams, clearAll, loadStrokes, navigate]);
 
   // Auto-save for new notes — create on first change
   const ensureNoteCreated = useCallback(async () => {
@@ -85,15 +96,16 @@ export default function NoteEditorPage() {
         strokes: noteType === 'handwriting' ? latestStrokesRef.current : undefined,
       });
       noteIdRef.current = created._id;
+      setNoteId(created._id);
       // Update URL without reload
       window.history.replaceState(null, '', `/editor/${created._id}`);
       return created._id;
     }
     return id!;
-  }, [isNew, title, noteType, textContent, searchParams, id]);
+  }, [isNew, title, noteType, textContent, searchParams, id, createNote]);
 
   // Debounced save
-  const triggerSave = useCallback(async (data: any) => {
+  const triggerSave = useCallback(async (data: Partial<UpdateNoteDto & { strokes: IStroke[]; thumbnail: string; isPublic: boolean }>) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
 
     saveTimerRef.current = setTimeout(async () => {
@@ -139,7 +151,7 @@ export default function NoteEditorPage() {
         ctx.fillRect(0, 0, 240, 160);
         ctx.drawImage(firstPageCanvas, 0, 0, firstPageCanvas.width, firstPageCanvas.height, 0, 0, 240, 160);
         thumbnail = tempCanvas.toDataURL('image/png', 0.6);
-      } catch (e) {
+      } catch {
         // Ignore thumbnail generation errors
       }
     }
@@ -222,12 +234,12 @@ export default function NoteEditorPage() {
                 {isPublic && <CheckIcon style={{ width: 16, height: 16, color: '#2DAADB' }} />}
               </div>
 
-              {isPublic && noteIdRef.current && (
+              {isPublic && noteId && (
                 <div style={{ marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '16px' }}>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <input
                       readOnly
-                      value={`${window.location.origin}/share/${noteIdRef.current}`}
+                      value={`${window.location.origin}/share/${noteId}`}
                       style={{
                         flex: 1, padding: '6px 8px', borderRadius: '4px',
                         border: '1px solid #ddd', fontSize: '12px', outline: 'none'
@@ -240,7 +252,7 @@ export default function NoteEditorPage() {
                         border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer', fontSize: '12px'
                       }}
                       onClick={() => {
-                        navigator.clipboard.writeText(`${window.location.origin}/share/${noteIdRef.current}`);
+                        navigator.clipboard.writeText(`${window.location.origin}/share/${noteId}`);
                         Alert.successToast('Link copied to clipboard!');
                       }}
                     >
@@ -256,11 +268,11 @@ export default function NoteEditorPage() {
                     style={{
                       width: '100%',
                       padding: '8px',
-                      backgroundColor: user?.quickNoteId === noteIdRef.current ? '#8B7EC8' : '#f1f1f1',
-                      color: user?.quickNoteId === noteIdRef.current ? '#fff' : '#333',
+                      backgroundColor: user?.quickNoteId === noteId ? '#8B7EC8' : '#f1f1f1',
+                      color: user?.quickNoteId === noteId ? '#fff' : '#333',
                       border: '1px solid #ddd',
                       borderRadius: '4px',
-                      cursor: user?.quickNoteId === noteIdRef.current ? 'default' : 'pointer',
+                      cursor: user?.quickNoteId === noteId ? 'default' : 'pointer',
                       fontSize: '13px',
                       fontWeight: 500,
                       display: 'flex',
@@ -269,7 +281,7 @@ export default function NoteEditorPage() {
                       gap: '8px'
                     }}
                     onClick={async () => {
-                      if (user?.quickNoteId === noteIdRef.current) return;
+                      if (user?.quickNoteId === noteId) return;
                       if (!noteIdRef.current) {
                         const newId = await ensureNoteCreated();
                         await updateQuickNote(newId);
@@ -278,7 +290,7 @@ export default function NoteEditorPage() {
                       }
                       Alert.successToast('This note is now your Quick Note!');
                     }}
-                    disabled={user?.quickNoteId === noteIdRef.current}
+                    disabled={user?.quickNoteId === noteId}
                   >
                     <div className="tooltip-container">
                       <StarIcon style={{ width: 14, height: 14, color: '#F5B731', marginRight: 4 }} />
@@ -286,7 +298,7 @@ export default function NoteEditorPage() {
                         Đây là Quick Note mặc định sẽ được đồng bộ lên Extension
                       </div>
                     </div>
-                    {user?.quickNoteId === noteIdRef.current ? 'Current Quick Note' : 'Set as Quick Note'}
+                    {user?.quickNoteId === noteId ? 'Current Quick Note' : 'Set as Quick Note'}
                   </button>
                   <p style={{ fontSize: '11px', color: '#666', marginTop: '6px', textAlign: 'center' }}>
                     Quick Notes can be accessed instantly from the TNote Chrome Extension.

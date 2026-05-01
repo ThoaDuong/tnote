@@ -65,7 +65,8 @@ export default function DashboardPage() {
       );
       return;
     }
-    if (confirm('Delete this note?')) {
+    const confirmed = await Alert.confirm('Delete this note?', 'This action cannot be undone.', 'Delete');
+    if (confirmed) {
       await deleteNote(note._id);
     }
   };
@@ -76,7 +77,7 @@ export default function DashboardPage() {
     try {
       await updateQuickNote(noteId);
       Alert.successToast('Quick Note updated!');
-    } catch (err) {
+    } catch {
       Alert.error('Failed to update Quick Note.');
     }
   };

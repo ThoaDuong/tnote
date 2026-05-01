@@ -24,7 +24,7 @@ export const useNoteStore = create<NoteState>((set, get) => ({
   fetchNotes: async (folderId) => {
     set({ isLoading: true });
     try {
-      const params: any = {};
+      const params: Record<string, string> = {};
       if (folderId) params.folderId = folderId;
       const q = get().searchQuery;
       if (q) params.search = q;

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useFolderStore } from '../store/folderStore';
 import { useNoteStore } from '../store/noteStore';
+import { Alert } from './Alert';
 import {
   MagnifyingGlassIcon,
   ClipboardDocumentListIcon,
@@ -42,7 +43,12 @@ export default function Sidebar() {
 
   const handleDeleteFolder = async (e: React.MouseEvent, folderId: string) => {
     e.stopPropagation();
-    if (confirm('Delete this folder and all its notes?')) {
+    const confirmed = await Alert.confirm(
+      'Delete this folder?',
+      'All notes in this folder will also be deleted. This action cannot be undone.',
+      'Delete',
+    );
+    if (confirmed) {
       await deleteFolder(folderId);
       fetchNotes(null);
     }

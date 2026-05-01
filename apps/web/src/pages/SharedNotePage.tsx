@@ -16,22 +16,29 @@ export default function SharedNotePage() {
   useEffect(() => {
     if (!id) return;
 
-    setIsLoading(true);
-    notesApi.getPublicById(id)
-      .then((data) => {
+    let cancelled = false;
+
+    const fetchNote = async () => {
+      try {
+        const data = await notesApi.getPublicById(id);
+        if (cancelled) return;
         setNote(data);
         if (data.type === 'handwriting' && data.strokes) {
           loadStrokes(data.strokes);
         }
-        setIsLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
+        if (cancelled) return;
         console.error('Shared note load error:', err);
         setError('Tài liệu này không tồn tại hoặc đã bị tắt chế độ chia sẻ công khai.');
-        setIsLoading(false);
-      });
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    fetchNote();
 
     return () => {
+      cancelled = true;
       clearAll();
     };
   }, [id, loadStrokes, clearAll]);
