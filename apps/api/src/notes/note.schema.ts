@@ -83,6 +83,9 @@ export class Note extends Document {
 
   @Prop({ default: false })
   isPinned: boolean;
+
+  @Prop({ default: 0 })
+  cardStyle: number;
 }
 
 export const NoteSchema = SchemaFactory.createForClass(Note);

@@ -57,6 +57,7 @@ export interface INote {
 
   isPublic?: boolean;
   isPinned?: boolean;
+  cardStyle?: number;
 
   createdAt: string;
   updatedAt: string;
@@ -91,4 +92,5 @@ export interface UpdateNoteDto {
   canvasWidth?: number;
   canvasHeight?: number;
   isPublic?: boolean;
+  cardStyle?: number;
 }

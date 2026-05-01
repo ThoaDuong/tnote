@@ -23,7 +23,7 @@
     "storage"
   ],
   "host_permissions": [
-    "http://localhost:5173/*",
-    "http://localhost:3000/*"
+    "https://tnote-web.vercel.app/*",
+    "https://tnote.onrender.com/*"
   ]
 }

@@ -13,16 +13,20 @@ import {
   EllipsisVerticalIcon,
   XMarkIcon,
   PencilIcon,
+  SwatchIcon,
 } from '@heroicons/react/24/outline';
+
+const CARD_STYLE_COUNT = 9;
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { folders, activeFolderId, fetchFolders } = useFolderStore();
-  const { notes, isLoading, fetchNotes, deleteNote } = useNoteStore();
+  const { notes, isLoading, fetchNotes, deleteNote, updateNote } = useNoteStore();
   const [showNewNoteModal, setShowNewNoteModal] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState('');
   const [newNoteType, setNewNoteType] = useState<NoteType>('text');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [stylePickerId, setStylePickerId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchFolders();
@@ -31,7 +35,7 @@ export default function DashboardPage() {
 
   // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => setOpenMenuId(null);
+    const handleClickOutside = () => { setOpenMenuId(null); setStylePickerId(null); };
     window.addEventListener('click', handleClickOutside);
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
@@ -41,7 +45,6 @@ export default function DashboardPage() {
 
   const handleCreateNote = () => {
     if (!newNoteTitle.trim()) return;
-    // Navigate to editor with params
     const params = new URLSearchParams({
       title: newNoteTitle.trim(),
       type: newNoteType,
@@ -59,6 +62,13 @@ export default function DashboardPage() {
     if (confirmed) {
       await deleteNote(noteId);
     }
+  };
+
+  const handleChangeCardStyle = async (e: React.MouseEvent, noteId: string, style: number) => {
+    e.stopPropagation();
+    setStylePickerId(null);
+    setOpenMenuId(null);
+    await updateNote(noteId, { cardStyle: style });
   };
 
   const formatDate = (dateStr: string) => {
@@ -105,51 +115,65 @@ export default function DashboardPage() {
               <div
                 key={note._id}
                 className="note-card"
+                style={{ backgroundImage: `url(/cards/card-${note.cardStyle ?? 0}.png)` }}
                 onClick={() => navigate(`/editor/${note._id}`)}
               >
-                <div className="note-card-preview">
-                  {note.type === 'handwriting' && note.thumbnail ? (
-                    <img src={note.thumbnail} alt={note.title} />
-                  ) : note.type === 'text' && note.textContent ? (
-                    <div className="preview-text">{note.textContent}</div>
-                  ) : (
-                    <div className="preview-icon">
-                      {note.type === 'handwriting' ? <PencilIcon style={{ width: 32, height: 32, color: 'var(--text-tertiary)', opacity: 0.5 }} /> : <DocumentTextIcon style={{ width: 32, height: 32, color: 'var(--text-tertiary)', opacity: 0.5 }} />}
+                {/* Settings menu - top right */}
+                <div className="note-card-menu-container">
+                  <button
+                    className="note-card-menu-trigger"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setStylePickerId(null);
+                      setOpenMenuId(openMenuId === note._id ? null : note._id);
+                    }}
+                  >
+                    <EllipsisVerticalIcon style={{ width: 16, height: 16 }} />
+                  </button>
+
+                  {openMenuId === note._id && (
+                    <div className="note-card-dropdown" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        className="dropdown-item"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setStylePickerId(note._id);
+                        }}
+                      >
+                        <SwatchIcon style={{ width: 14, height: 14 }} /> Change Style
+                      </button>
+
+                      {stylePickerId === note._id && (
+                        <div className="card-style-picker" onClick={(e) => e.stopPropagation()}>
+                          {Array.from({ length: CARD_STYLE_COUNT }, (_, i) => (
+                            <div
+                              key={i}
+                              className={`card-style-option ${(note.cardStyle ?? 0) === i ? 'selected' : ''}`}
+                              onClick={(e) => handleChangeCardStyle(e, note._id, i)}
+                            >
+                              <img src={`/cards/card-${i}.png`} alt={`Style ${i + 1}`} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <button
+                        className="dropdown-item danger"
+                        onClick={(e) => handleDeleteNote(e, note._id)}
+                      >
+                        <TrashIcon style={{ width: 14, height: 14 }} /> Delete
+                      </button>
                     </div>
                   )}
                 </div>
-                <div className="note-card-info">
-                  <div className="note-card-title">
-                    {note.title}
-                  </div>
-                  <div className="note-card-meta">
-                    <span className={`note-card-type ${note.type}`}>
-                      {note.type === 'handwriting' ? <PencilIcon style={{ width: 12, height: 12 }} /> : <DocumentTextIcon style={{ width: 12, height: 12 }} />} {note.type}
-                    </span>
-                    <span>{formatDate(note.updatedAt)}</span>
-                    <div className="note-card-menu-container">
-                      <button
-                        className="note-card-menu-trigger"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenMenuId(openMenuId === note._id ? null : note._id);
-                        }}
-                      >
-                        <EllipsisVerticalIcon style={{ width: 16, height: 16 }} />
-                      </button>
 
-                      {openMenuId === note._id && (
-                        <div className="note-card-dropdown" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            className="dropdown-item danger"
-                            onClick={(e) => handleDeleteNote(e, note._id)}
-                          >
-                            <TrashIcon style={{ width: 14, height: 14 }} /> Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                {/* Content - centered */}
+                <div className="note-card-info">
+                  <div className="note-card-title">{note.title}</div>
+                  <span className={`note-card-type ${note.type}`}>
+                    {note.type === 'handwriting' ? <PencilIcon style={{ width: 12, height: 12 }} /> : <DocumentTextIcon style={{ width: 12, height: 12 }} />} {note.type}
+                  </span>
+                  <span className="note-card-date">{formatDate(note.updatedAt)}</span>
                 </div>
               </div>
             ))}
