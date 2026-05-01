@@ -14,6 +14,7 @@ import {
   XMarkIcon,
   PencilIcon,
   SwatchIcon,
+  FolderIcon,
 } from '@heroicons/react/24/outline';
 
 const CARD_STYLE_COUNT = 9;
@@ -25,8 +26,10 @@ export default function DashboardPage() {
   const [showNewNoteModal, setShowNewNoteModal] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState('');
   const [newNoteType, setNewNoteType] = useState<NoteType>('text');
+  const [newNoteFolderId, setNewNoteFolderId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [stylePickerId, setStylePickerId] = useState<string | null>(null);
+  const [moveFolderId, setMoveFolderId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchFolders();
@@ -35,7 +38,7 @@ export default function DashboardPage() {
 
   // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => { setOpenMenuId(null); setStylePickerId(null); };
+    const handleClickOutside = () => { setOpenMenuId(null); setStylePickerId(null); setMoveFolderId(null); };
     window.addEventListener('click', handleClickOutside);
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
@@ -48,11 +51,16 @@ export default function DashboardPage() {
     const params = new URLSearchParams({
       title: newNoteTitle.trim(),
       type: newNoteType,
-      ...(activeFolderId ? { folderId: activeFolderId } : {}),
+      ...(newNoteFolderId ? { folderId: newNoteFolderId } : {}),
     });
     navigate(`/editor/new?${params.toString()}`);
     setShowNewNoteModal(false);
     setNewNoteTitle('');
+  };
+
+  const handleOpenNewNoteModal = () => {
+    setNewNoteFolderId(activeFolderId);
+    setShowNewNoteModal(true);
   };
 
   const handleDeleteNote = async (e: React.MouseEvent, noteId: string) => {
@@ -69,6 +77,13 @@ export default function DashboardPage() {
     setStylePickerId(null);
     setOpenMenuId(null);
     await updateNote(noteId, { cardStyle: style });
+  };
+
+  const handleMoveToFolder = async (e: React.MouseEvent, noteId: string, folderId: string | null) => {
+    e.stopPropagation();
+    setMoveFolderId(null);
+    setOpenMenuId(null);
+    await updateNote(noteId, { folderId });
   };
 
   const formatDate = (dateStr: string) => {
@@ -88,7 +103,7 @@ export default function DashboardPage() {
           <h1 className="content-title">{contentTitle}</h1>
           <button
             className="new-note-btn"
-            onClick={() => setShowNewNoteModal(true)}
+            onClick={handleOpenNewNoteModal}
             id="new-note-btn"
           >
             <PlusIcon style={{ width: 16, height: 16 }} />
@@ -125,6 +140,7 @@ export default function DashboardPage() {
                     onClick={(e) => {
                       e.stopPropagation();
                       setStylePickerId(null);
+                      setMoveFolderId(null);
                       setOpenMenuId(openMenuId === note._id ? null : note._id);
                     }}
                   >
@@ -137,7 +153,8 @@ export default function DashboardPage() {
                         className="dropdown-item"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setStylePickerId(note._id);
+                          setMoveFolderId(null);
+                          setStylePickerId(stylePickerId === note._id ? null : note._id);
                         }}
                       >
                         <SwatchIcon style={{ width: 14, height: 14 }} /> Change Style
@@ -152,6 +169,38 @@ export default function DashboardPage() {
                               onClick={(e) => handleChangeCardStyle(e, note._id, i)}
                             >
                               <img src={`/cards/card-${i}.png`} alt={`Style ${i + 1}`} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <button
+                        className="dropdown-item"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setStylePickerId(null);
+                          setMoveFolderId(moveFolderId === note._id ? null : note._id);
+                        }}
+                      >
+                        <FolderIcon style={{ width: 14, height: 14 }} /> Change Folder
+                      </button>
+
+                      {moveFolderId === note._id && (
+                        <div className="card-folder-picker" onClick={(e) => e.stopPropagation()}>
+                          <div 
+                            className={`folder-picker-item ${!note.folderId ? 'selected' : ''}`}
+                            onClick={(e) => handleMoveToFolder(e, note._id, null)}
+                          >
+                            All Notes
+                          </div>
+                          {folders.map(f => (
+                            <div 
+                              key={f._id}
+                              className={`folder-picker-item ${note.folderId === f._id ? 'selected' : ''}`}
+                              onClick={(e) => handleMoveToFolder(e, note._id, f._id)}
+                            >
+                              <div className="folder-dot" style={{ backgroundColor: f.color }} />
+                              <span className="folder-name">{f.name}</span>
                             </div>
                           ))}
                         </div>
@@ -201,6 +250,19 @@ export default function DashboardPage() {
                   autoFocus
                   id="note-title-input"
                 />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Folder</label>
+                <select 
+                  className="form-input form-select"
+                  value={newNoteFolderId || ''}
+                  onChange={(e) => setNewNoteFolderId(e.target.value || null)}
+                >
+                  <option value="">All Notes</option>
+                  {folders.map(f => (
+                    <option key={f._id} value={f._id}>{f.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="form-group">
                 <label className="form-label">Type</label>

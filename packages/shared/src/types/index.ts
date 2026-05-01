@@ -93,4 +93,5 @@ export interface UpdateNoteDto {
   canvasHeight?: number;
   isPublic?: boolean;
   cardStyle?: number;
+  folderId?: string | null;
 }

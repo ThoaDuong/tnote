@@ -7,7 +7,6 @@ import {
   ArrowLeftIcon,
 } from '@heroicons/react/24/outline';
 
-declare const chrome: any;
 
 interface Note {
   _id: string;
@@ -28,7 +27,7 @@ function App() {
   const [textNotes, setTextNotes] = useState<Note[]>([]);
   const [listLoading, setListLoading] = useState(false);
 
-  const saveTimerRef = useRef<any>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeNoteIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -46,7 +45,7 @@ function App() {
 
   const checkAuth = () => {
     if (typeof chrome !== 'undefined' && chrome.cookies) {
-      chrome.cookies.get({ url: WEB_URL, name: 'token' }, (cookie: any) => {
+      chrome.cookies.get({ url: WEB_URL, name: 'token' }, (cookie: chrome.cookies.Cookie | null) => {
         if (cookie?.value) {
           setToken(cookie.value);
           fetchUserAndNote(cookie.value);
