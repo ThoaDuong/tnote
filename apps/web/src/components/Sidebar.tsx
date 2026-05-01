@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useFolderStore } from '../store/folderStore';
 import { useNoteStore } from '../store/noteStore';
@@ -169,6 +170,9 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="sidebar-footer">
+        <div style={{ padding: '0 16px 12px', fontSize: '11px', textAlign: 'center' }}>
+          <Link to="/privacy-policy" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }} onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'} onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}>Privacy Policy</Link>
+        </div>
         <div className="user-profile">
           {user?.avatar ? (
             <img className="user-avatar" src={user.avatar} alt={user.displayName} />

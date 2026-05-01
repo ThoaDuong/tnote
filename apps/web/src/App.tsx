@@ -6,6 +6,7 @@ import AuthCallback from './pages/AuthCallback';
 import DashboardPage from './pages/DashboardPage';
 import NoteEditorPage from './pages/NoteEditorPage';
 import SharedNotePage from './pages/SharedNotePage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import './index.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -55,6 +56,7 @@ export default function App() {
           }
         />
         <Route path="/share/:id" element={<SharedNotePage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
